@@ -1,0 +1,794 @@
+import { useState, useEffect } from 'react';
+import { Trophy, TrendingUp, DollarSign, Users, Download, Share2, Filter, Calendar } from 'lucide-react';
+import { Card } from '../components/Card';
+import { Avatar } from '../components/Avatar';
+import { Loading } from '../components/Loading';
+import { Alert } from '../components/Alert';
+import { Button } from '../components/Button';
+import { useSeason } from '../context/SeasonContext';
+import { useAthletes } from '../context/AthletesContext';
+import { getAllCheckins } from '../services/checkins';
+import { getAllSeasons } from '../services/seasons';
+import { getAllPayments, calculateTotalPaid } from '../services/payments';
+import { calculateStats, calculateFine } from '../utils/calculator';
+import { 
+  sortByRanking, 
+  sortByMostRest, 
+  sortByMostAbsence, 
+  sortByMostHospital 
+} from '../utils/ranking';
+import { formatCurrency, formatPercentage } from '../utils/formatters';
+import { generateWeeklyImage, downloadWeeklyImage, shareWeeklyImage } from '../utils/imageGenerator';
+import { StatusEmoji, CheckinStatus, CalculatedStatus } from '../services/checkins';
+import { format, parseISO, startOfWeek, endOfWeek, subWeeks } from 'date-fns';
+import { ptBR } from 'date-fns/locale';
+
+export default function Dashboard() {
+  const { currentSeason } = useSeason();
+  const { athletes, getAthleteById } = useAthletes();
+  const [loading, setLoading] = useState(true);
+  const [checkins, setCheckins] = useState([]);
+  const [payments, setPayments] = useState([]);
+  const [rankingData, setRankingData] = useState([]);
+  const [financialData, setFinancialData] = useState([]);
+  const [activeTab, setActiveTab] = useState('ranking');
+  const [alert, setAlert] = useState(null);
+  const [generatingImage, setGeneratingImage] = useState(false);
+  const [attendanceLog, setAttendanceLog] = useState([]);
+  const [allSeasons, setAllSeasons] = useState([]);
+  const [selectedSeasonId, setSelectedSeasonId] = useState(null);
+  const [showDateFilter, setShowDateFilter] = useState(false);
+  const [startDate, setStartDate] = useState('');
+  const [endDate, setEndDate] = useState('');
+  const [filteredCheckins, setFilteredCheckins] = useState([]);
+
+  useEffect(() => {
+    loadSeasons();
+  }, []);
+
+  useEffect(() => {
+    if (currentSeason) {
+      setSelectedSeasonId(currentSeason.id);
+      loadDashboardData(currentSeason.id);
+    } else {
+      setLoading(false);
+    }
+  }, [currentSeason, athletes]);
+
+  useEffect(() => {
+    applyDateFilter();
+  }, [startDate, endDate, checkins]);
+
+  const loadSeasons = async () => {
+    try {
+      const seasons = await getAllSeasons();
+      setAllSeasons(seasons);
+    } catch (error) {
+      console.error('Erro ao carregar temporadas:', error);
+    }
+  };
+
+  const applyDateFilter = () => {
+    if (!startDate && !endDate) {
+      setFilteredCheckins(checkins);
+      return;
+    }
+
+    const filtered = checkins.filter(checkin => {
+      if (startDate && checkin.date < startDate) return false;
+      if (endDate && checkin.date > endDate) return false;
+      return true;
+    });
+
+    setFilteredCheckins(filtered);
+  };
+
+  const handleSeasonChange = async (seasonId) => {
+    setSelectedSeasonId(seasonId);
+    await loadDashboardData(seasonId);
+  };
+
+  const handleClearDateFilter = () => {
+    setStartDate('');
+    setEndDate('');
+    setShowDateFilter(false);
+  };
+
+  const handleShowDateFilter = () => {
+    // Calcular semana anterior
+    const today = new Date();
+    const lastWeekStart = startOfWeek(subWeeks(today, 1), { weekStartsOn: 1, locale: ptBR });
+    const lastWeekEnd = endOfWeek(subWeeks(today, 1), { weekStartsOn: 1, locale: ptBR });
+    
+    // Formatar para yyyy-MM-dd
+    const formatDate = (date) => {
+      const year = date.getFullYear();
+      const month = String(date.getMonth() + 1).padStart(2, '0');
+      const day = String(date.getDate()).padStart(2, '0');
+      return `${year}-${month}-${day}`;
+    };
+    
+    setStartDate(formatDate(lastWeekStart));
+    setEndDate(formatDate(lastWeekEnd));
+    setShowDateFilter(true);
+  };
+
+  const loadDashboardData = async (seasonId = currentSeason?.id) => {
+    if (!seasonId) return;
+    
+    setLoading(true);
+    try {
+      const selectedSeason = allSeasons.find(s => s.id === seasonId) || currentSeason;
+      
+      const [checkinsData, paymentsData] = await Promise.all([
+        getAllCheckins(seasonId),
+        getAllPayments(seasonId)
+      ]);
+
+      console.log('Check-ins carregados no Dashboard:', checkinsData.length, 'registros');
+      if (checkinsData.length > 0) {
+        console.log('Exemplo de check-in:', checkinsData[0]);
+      }
+
+      setCheckins(checkinsData);
+      setPayments(paymentsData);
+
+      // Preparar log de presença
+      const log = [];
+      const sortedCheckins = [...checkinsData].sort((a, b) => a.date.localeCompare(b.date));
+      
+      sortedCheckins.forEach((checkin, idx) => {
+        const participants = selectedSeason.participants || [];
+        participants.forEach(athleteId => {
+          const athlete = getAthleteById(athleteId);
+          if (!athlete) return;
+          
+          const athleteCheckin = checkin.athletes?.[athleteId];
+          const status = athleteCheckin?.status || CheckinStatus.NOT_SET;
+          
+          log.push({
+            date: checkin.date,
+            athleteId,
+            athleteName: athlete.name,
+            status,
+            emoji: StatusEmoji[status]
+          });
+        });
+      });
+      
+      setAttendanceLog(log);
+
+      // Calcula dados de ranking
+      const athletesData = (selectedSeason.participants || []).map(athleteId => {
+        const athlete = getAthleteById(athleteId);
+        if (!athlete) return null;
+
+        const stats = calculateStats(checkinsData, athleteId);
+        const fineInfo = calculateFine(
+          stats,
+          selectedSeason.finePerAbsence,
+          selectedSeason.weeklyRestLimit,
+          checkinsData,
+          selectedSeason.neutralDays
+        );
+
+        // Calcula total pago
+        const athletePayments = paymentsData.filter(p => p.athleteId === athleteId);
+        const totalPaid = athletePayments.reduce((sum, p) => sum + p.value, 0);
+
+        return {
+          id: athlete.id,
+          name: athlete.name,
+          photoUrl: athlete.photoUrl,
+          stats,
+          fineInfo,
+          totalPaid,
+          debt: Math.max(0, fineInfo.fineAmount - totalPaid)
+        };
+      }).filter(Boolean);
+
+      setRankingData(athletesData);
+      setFinancialData(athletesData);
+    } catch (error) {
+      setAlert({ type: 'error', message: 'Erro ao carregar dados do dashboard' });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (!currentSeason) {
+    return (
+      <div className="container mx-auto px-4 py-8">
+        <Card>
+          <div className="text-center py-12">
+            <Trophy className="w-16 h-16 text-gray-400 mx-auto mb-4" />
+            <h2 className="text-2xl font-bold text-gray-800 mb-2">
+              Bem-vindo ao Daily Check Maromba!
+            </h2>
+            <p className="text-gray-600 mb-6">
+              Crie uma temporada para começar a acompanhar o desempenho dos atletas.
+            </p>
+          </div>
+        </Card>
+      </div>
+    );
+  }
+
+  if (loading) {
+    return <Loading text="Carregando dashboard..." />;
+  }
+
+  const rankedAthletes = sortByRanking(rankingData);
+  const dataToUse = filteredCheckins.length > 0 ? filteredCheckins : checkins;
+  const totalExpected = financialData.reduce((sum, a) => sum + a.fineInfo.fineAmount, 0);
+  const totalPaid = financialData.reduce((sum, a) => sum + a.totalPaid, 0);
+  const totalDebt = totalExpected - totalPaid;
+  const selectedSeason = allSeasons.find(s => s.id === selectedSeasonId) || currentSeason;
+
+  const handleGenerateWeeklyImage = async (shouldShare = false) => {
+    // Validar se há filtro de data
+    if (!startDate || !endDate) {
+      setAlert({ type: 'error', message: 'Por favor, filtre pela semana desejada antes de emitir a imagem' });
+      return;
+    }
+
+    // Validar se é exatamente 7 dias
+    const start = new Date(startDate);
+    const end = new Date(endDate);
+    const diffTime = Math.abs(end - start);
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1;
+
+    if (diffDays !== 7) {
+      setAlert({ type: 'error', message: 'Você excedeu a quantidade de dias. Selecione um intervalo semanal de 7 dias' });
+      return;
+    }
+
+    try {
+      setGeneratingImage(true);
+      
+      // Filtrar apenas atletas participantes da temporada
+      const participantAthletes = athletes.filter(athlete => 
+        currentSeason.participants?.includes(athlete.id)
+      );
+
+      // Usar background da temporada se existir
+      const backgroundUrl = currentSeason.backgroundUrl || null;
+
+      const blob = await generateWeeklyImage(
+        currentSeason, 
+        participantAthletes, 
+        backgroundUrl,
+        startDate,
+        endDate
+      );
+      
+      if (shouldShare) {
+        await shareWeeklyImage(blob, currentSeason.title);
+        setAlert({ type: 'success', message: 'Imagem gerada com sucesso!' });
+      } else {
+        downloadWeeklyImage(blob, currentSeason.title);
+        setAlert({ type: 'success', message: 'Imagem baixada com sucesso!' });
+      }
+    } catch (error) {
+      setAlert({ type: 'error', message: `Erro ao gerar imagem: ${error.message}` });
+    } finally {
+      setGeneratingImage(false);
+    }
+  };
+
+  return (
+    <div className="container mx-auto px-4 py-8">
+      <div className="mb-6">
+        <div className="mb-4">
+          <h1 className="text-3xl font-bold text-gray-800 mb-2">Dashboard</h1>
+        </div>
+
+        {/* Filtros */}
+        <div className="bg-white rounded-lg shadow-sm p-4 space-y-4">
+          {/* Filtro de Temporada */}
+          <div className="flex items-center gap-4">
+            <label className="font-medium text-gray-700 min-w-[120px]">Temporada:</label>
+            <select
+              value={selectedSeasonId || ''}
+              onChange={(e) => handleSeasonChange(e.target.value)}
+              className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            >
+              {allSeasons.map(season => (
+                <option key={season.id} value={season.id}>
+                  {season.title} {season.active ? '(Ativa)' : ''}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          {/* Filtro de Data */}
+          <div className="flex items-center gap-4">
+            <label className="font-medium text-gray-700 min-w-[120px]">Período:</label>
+            {!showDateFilter ? (
+              <div className="flex-1 flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <span className="text-gray-600">Toda a temporada</span>
+                  <Button
+                    onClick={handleShowDateFilter}
+                    variant="outline"
+                    className="flex items-center gap-1.5 text-sm px-3 py-1.5"
+                  >
+                    <Filter className="w-3.5 h-3.5" />
+                    Filtrar por Data
+                  </Button>
+                </div>
+                <div className="flex gap-2">
+                  <Button
+                    onClick={() => handleGenerateWeeklyImage(false)}
+                    disabled={generatingImage}
+                    className="flex items-center gap-1.5 text-sm px-3 py-1.5"
+                    variant="outline"
+                  >
+                    <Download className="w-3.5 h-3.5" />
+                    {generatingImage ? 'Gerando...' : 'Baixar Imagem'}
+                  </Button>
+                  <Button
+                    onClick={() => handleGenerateWeeklyImage(true)}
+                    disabled={generatingImage}
+                    className="flex items-center gap-1.5 text-sm px-3 py-1.5"
+                  >
+                    <Share2 className="w-3.5 h-3.5" />
+                    {generatingImage ? 'Gerando...' : 'Compartilhar'}
+                  </Button>
+                </div>
+              </div>
+            ) : (
+              <div className="flex-1 flex items-center justify-between gap-3">
+                <div className="flex items-center gap-3">
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm text-gray-600">De:</span>
+                    <input
+                      type="date"
+                      value={startDate}
+                      onChange={(e) => setStartDate(e.target.value)}
+                      className="px-3 py-1.5 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                    />
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm text-gray-600">Até:</span>
+                    <input
+                      type="date"
+                      value={endDate}
+                      onChange={(e) => setEndDate(e.target.value)}
+                      className="px-3 py-1.5 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                    />
+                  </div>
+                  <Button
+                    onClick={handleClearDateFilter}
+                    variant="outline"
+                    className="text-red-600 hover:bg-red-50 text-sm px-3 py-1.5"
+                  >
+                    Limpar Filtro
+                  </Button>
+                </div>
+                <div className="flex gap-2">
+                  <Button
+                    onClick={() => handleGenerateWeeklyImage(false)}
+                    disabled={generatingImage}
+                    className="flex items-center gap-1.5 text-sm px-3 py-1.5"
+                    variant="outline"
+                  >
+                    <Download className="w-3.5 h-3.5" />
+                    {generatingImage ? 'Gerando...' : 'Baixar Imagem'}
+                  </Button>
+                  <Button
+                    onClick={() => handleGenerateWeeklyImage(true)}
+                    disabled={generatingImage}
+                    className="flex items-center gap-1.5 text-sm px-3 py-1.5"
+                  >
+                    <Share2 className="w-3.5 h-3.5" />
+                    {generatingImage ? 'Gerando...' : 'Compartilhar'}
+                  </Button>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {alert && (
+        <div className="mb-6">
+          <Alert
+            type={alert.type}
+            message={alert.message}
+            onClose={() => setAlert(null)}
+          />
+        </div>
+      )}
+
+      {/* Cards de Resumo */}
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+        <Card className="bg-gradient-to-br from-blue-50 to-blue-100">
+          <div className="flex items-center gap-4">
+            <div className="p-3 bg-blue-500 rounded-lg">
+              <Users className="w-8 h-8 text-white" />
+            </div>
+            <div>
+              <p className="text-sm text-gray-600">Participantes</p>
+              <p className="text-2xl font-bold text-gray-800">
+                {currentSeason.participants?.length || 0}
+              </p>
+            </div>
+          </div>
+        </Card>
+
+        <Card className="bg-gradient-to-br from-green-50 to-green-100">
+          <div className="flex items-center gap-4">
+            <div className="p-3 bg-green-500 rounded-lg">
+              <DollarSign className="w-8 h-8 text-white" />
+            </div>
+            <div>
+              <p className="text-sm text-gray-600">Total Pago</p>
+              <p className="text-2xl font-bold text-gray-800">
+                {formatCurrency(totalPaid)}
+              </p>
+            </div>
+          </div>
+        </Card>
+
+        <Card className="bg-gradient-to-br from-yellow-50 to-yellow-100">
+          <div className="flex items-center gap-4">
+            <div className="p-3 bg-yellow-500 rounded-lg">
+              <TrendingUp className="w-8 h-8 text-white" />
+            </div>
+            <div>
+              <p className="text-sm text-gray-600">Previsto</p>
+              <p className="text-2xl font-bold text-gray-800">
+                {formatCurrency(totalExpected)}
+              </p>
+            </div>
+          </div>
+        </Card>
+
+        <Card className="bg-gradient-to-br from-red-50 to-red-100">
+          <div className="flex items-center gap-4">
+            <div className="p-3 bg-red-500 rounded-lg">
+              <DollarSign className="w-8 h-8 text-white" />
+            </div>
+            <div>
+              <p className="text-sm text-gray-600">Devendo</p>
+              <p className="text-2xl font-bold text-gray-800">
+                {formatCurrency(totalDebt)}
+              </p>
+            </div>
+          </div>
+        </Card>
+      </div>
+
+      {/* Tabs */}
+      <div className="flex gap-2 mb-6">
+        <button
+          onClick={() => setActiveTab('ranking')}
+          className={`px-6 py-3 rounded-lg font-medium transition-all ${
+            activeTab === 'ranking'
+              ? 'bg-blue-600 text-white shadow-lg'
+              : 'bg-white text-gray-700 hover:bg-gray-50'
+          }`}
+        >
+          🏆 Ranking
+        </button>
+        <button
+          onClick={() => setActiveTab('financial')}
+          className={`px-6 py-3 rounded-lg font-medium transition-all ${
+            activeTab === 'financial'
+              ? 'bg-blue-600 text-white shadow-lg'
+              : 'bg-white text-gray-700 hover:bg-gray-50'
+          }`}
+        >
+          💰 Financeiro
+        </button>
+        <button
+          onClick={() => setActiveTab('attendance')}
+          className={`px-6 py-3 rounded-lg font-medium transition-all ${
+            activeTab === 'attendance'
+              ? 'bg-blue-600 text-white shadow-lg'
+              : 'bg-white text-gray-700 hover:bg-gray-50'
+          }`}
+        >
+          📋 Log de Presença
+        </button>
+      </div>
+
+      {/* Conteúdo das Tabs */}
+      {activeTab === 'ranking' && (
+        <>
+          <Card title="🏆 Ranking Principal" subtitle="Classificação geral dos atletas">
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead>
+                  <tr className="border-b-2 border-gray-200">
+                    <th className="text-left py-3 px-4 font-semibold text-gray-700">Pos</th>
+                    <th className="text-left py-3 px-4 font-semibold text-gray-700">Atleta</th>
+                    <th className="text-center py-3 px-4 font-semibold text-gray-700">✅</th>
+                    <th className="text-center py-3 px-4 font-semibold text-gray-700">❌</th>
+                    <th className="text-center py-3 px-4 font-semibold text-gray-700">🔷</th>
+                    <th className="text-center py-3 px-4 font-semibold text-gray-700">📄</th>
+                    <th className="text-center py-3 px-4 font-semibold text-gray-700">🚑</th>
+                    <th className="text-center py-3 px-4 font-semibold text-gray-700">⭐</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {rankedAthletes.map((athlete, index) => {
+                    const medalColors = ['#FFD700', '#C0C0C0', '#CD7F32'];
+                    const bgColor = index < 3 ? 'bg-yellow-50' : '';
+                    
+                    return (
+                      <tr key={athlete.id} className={`border-b border-gray-100 ${bgColor}`}>
+                        <td className="py-4 px-4">
+                          <div className="flex items-center justify-center w-8 h-8 rounded-full font-bold text-white" 
+                               style={{ backgroundColor: index < 3 ? medalColors[index] : '#6b7280' }}>
+                            {index + 1}
+                          </div>
+                        </td>
+                        <td className="py-4 px-4">
+                          <div className="flex items-center gap-3">
+                            <Avatar name={athlete.name} photoUrl={athlete.photoUrl} size="md" />
+                            <span className="font-bold text-gray-800">{athlete.name}</span>
+                          </div>
+                        </td>
+                        <td className="py-4 px-4 text-center font-bold text-green-600">
+                          {athlete.stats.present}
+                        </td>
+                        <td className="py-4 px-4 text-center font-bold text-red-600">
+                          {athlete.stats.absence}
+                        </td>
+                        <td className="py-4 px-4 text-center font-bold text-blue-600">
+                          {athlete.stats.rest}
+                        </td>
+                        <td className="py-4 px-4 text-center font-bold text-indigo-600">
+                          {athlete.stats.justified}
+                        </td>
+                        <td className="py-4 px-4 text-center font-bold text-orange-600">
+                          {athlete.stats.hospital}
+                        </td>
+                        <td className="py-4 px-4 text-center font-bold text-yellow-600">
+                          {athlete.stats.extra}
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          </Card>
+
+          {/* Mini Rankings */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-6">
+            <Card title="🛌 Quem Descansou Mais">
+              <div className="space-y-3">
+                {sortByMostRest(rankingData).slice(0, 5).map((athlete, index) => (
+                  <div key={athlete.id} className="flex items-center gap-3 p-2 bg-gray-50 rounded-lg">
+                    <span className="font-bold text-gray-600 w-6">{index + 1}º</span>
+                    <Avatar name={athlete.name} photoUrl={athlete.photoUrl} size="sm" />
+                    <span className="flex-1 font-medium text-gray-800">{athlete.name}</span>
+                    <span className="font-bold text-blue-600">{athlete.stats.rest}</span>
+                  </div>
+                ))}
+              </div>
+            </Card>
+
+            <Card title="❌ Quem Faltou Mais">
+              <div className="space-y-3">
+                {sortByMostAbsence(rankingData).slice(0, 5).map((athlete, index) => (
+                  <div key={athlete.id} className="flex items-center gap-3 p-2 bg-gray-50 rounded-lg">
+                    <span className="font-bold text-gray-600 w-6">{index + 1}º</span>
+                    <Avatar name={athlete.name} photoUrl={athlete.photoUrl} size="sm" />
+                    <span className="flex-1 font-medium text-gray-800">{athlete.name}</span>
+                    <span className="font-bold text-red-600">{athlete.stats.absence}</span>
+                  </div>
+                ))}
+              </div>
+            </Card>
+
+            <Card title="🏥 Quem Foi Mais ao Hospital">
+              <div className="space-y-3">
+                {sortByMostHospital(rankingData).slice(0, 5).map((athlete, index) => (
+                  <div key={athlete.id} className="flex items-center gap-3 p-2 bg-gray-50 rounded-lg">
+                    <span className="font-bold text-gray-600 w-6">{index + 1}º</span>
+                    <Avatar name={athlete.name} photoUrl={athlete.photoUrl} size="sm" />
+                    <span className="flex-1 font-medium text-gray-800">{athlete.name}</span>
+                    <span className="font-bold text-orange-600">{athlete.stats.hospital}</span>
+                  </div>
+                ))}
+              </div>
+            </Card>
+          </div>
+        </>
+      )}
+
+      {activeTab === 'financial' && (
+        <>
+          <Card title="💰 Lista de Devedores" subtitle="Controle financeiro da temporada">
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead>
+                  <tr className="border-b-2 border-gray-200">
+                    <th className="text-left py-3 px-4 font-semibold text-gray-700">Atleta</th>
+                    <th className="text-right py-3 px-4 font-semibold text-gray-700">Valor a Pagar</th>
+                    <th className="text-right py-3 px-4 font-semibold text-gray-700">Valor Pago</th>
+                    <th className="text-right py-3 px-4 font-semibold text-gray-700">Valor Devendo</th>
+                    <th className="text-center py-3 px-4 font-semibold text-gray-700">Status</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {financialData
+                    .sort((a, b) => b.debt - a.debt)
+                    .map((athlete) => {
+                      const isPaid = athlete.debt === 0 && athlete.fineInfo.fineAmount > 0;
+                      const hasDebt = athlete.debt > 0;
+                      
+                      return (
+                        <tr key={athlete.id} className="border-b border-gray-100 hover:bg-gray-50">
+                          <td className="py-4 px-4">
+                            <div className="flex items-center gap-3">
+                              <Avatar name={athlete.name} photoUrl={athlete.photoUrl} size="md" />
+                              <span className="font-medium text-gray-800">{athlete.name}</span>
+                            </div>
+                          </td>
+                          <td className="py-4 px-4 text-right font-bold text-gray-800">
+                            {formatCurrency(athlete.fineInfo.fineAmount)}
+                          </td>
+                          <td className="py-4 px-4 text-right font-bold text-green-600">
+                            {formatCurrency(athlete.totalPaid)}
+                          </td>
+                          <td className="py-4 px-4 text-right font-bold text-red-600">
+                            {formatCurrency(athlete.debt)}
+                          </td>
+                          <td className="py-4 px-4 text-center">
+                            {isPaid ? (
+                              <span className="px-3 py-1 bg-green-100 text-green-800 text-sm font-bold rounded-full">
+                                ✓ PAGO
+                              </span>
+                            ) : hasDebt ? (
+                              <span className="px-3 py-1 bg-red-100 text-red-800 text-sm font-bold rounded-full">
+                                DEVENDO
+                              </span>
+                            ) : (
+                              <span className="px-3 py-1 bg-gray-100 text-gray-800 text-sm font-bold rounded-full">
+                                SEM MULTA
+                              </span>
+                            )}
+                          </td>
+                        </tr>
+                      );
+                    })}
+                </tbody>
+                <tfoot>
+                  <tr className="border-t-2 border-gray-300 bg-gray-50">
+                    <td className="py-4 px-4 font-bold text-gray-800">TOTAL</td>
+                    <td className="py-4 px-4 text-right font-bold text-gray-800 text-lg">
+                      {formatCurrency(totalExpected)}
+                    </td>
+                    <td className="py-4 px-4 text-right font-bold text-green-600 text-lg">
+                      {formatCurrency(totalPaid)}
+                    </td>
+                    <td className="py-4 px-4 text-right font-bold text-red-600 text-lg">
+                      {formatCurrency(totalDebt)}
+                    </td>
+                    <td></td>
+                  </tr>
+                </tfoot>
+              </table>
+            </div>
+          </Card>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-6">
+            <Card className="bg-gradient-to-br from-blue-50 to-blue-100">
+              <h3 className="font-bold text-gray-700 mb-2">💵 Valor Total Previsto</h3>
+              <p className="text-3xl font-bold text-blue-600">{formatCurrency(totalExpected)}</p>
+              <p className="text-sm text-gray-600 mt-2">Se todos pagarem suas multas</p>
+            </Card>
+
+            <Card className="bg-gradient-to-br from-green-50 to-green-100">
+              <h3 className="font-bold text-gray-700 mb-2">💰 Valor Atual em Caixa</h3>
+              <p className="text-3xl font-bold text-green-600">{formatCurrency(totalPaid)}</p>
+              <p className="text-sm text-gray-600 mt-2">
+                {formatPercentage(totalExpected > 0 ? (totalPaid / totalExpected) * 100 : 0)} arrecadado
+              </p>
+            </Card>
+
+            <Card className="bg-gradient-to-br from-red-50 to-red-100">
+              <h3 className="font-bold text-gray-700 mb-2">🔴 Pendente</h3>
+              <p className="text-3xl font-bold text-red-600">{formatCurrency(totalDebt)}</p>
+              <p className="text-sm text-gray-600 mt-2">Valor ainda não pago</p>
+            </Card>
+          </div>
+        </>
+      )}
+
+      {activeTab === 'attendance' && (
+        <Card title="📋 Log de Presença" subtitle="Histórico detalhado de check-ins">
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead>
+                <tr className="border-b-2 border-gray-200">
+                  <th className="text-left py-3 px-4 font-semibold text-gray-700">Data</th>
+                  <th className="text-left py-3 px-4 font-semibold text-gray-700">Atleta</th>
+                  <th className="text-center py-3 px-4 font-semibold text-gray-700">Status</th>
+                  <th className="text-left py-3 px-4 font-semibold text-gray-700">Descrição</th>
+                </tr>
+              </thead>
+              <tbody>
+                {attendanceLog.map((log, index) => {
+                  const statusColors = {
+                    [CheckinStatus.NOT_SET]: 'bg-gray-50 text-gray-600',
+                    [CheckinStatus.PRESENT]: 'bg-green-50 text-green-800',
+                    [CheckinStatus.ABSENT]: 'bg-blue-50 text-blue-800',
+                    [CheckinStatus.HOSPITAL]: 'bg-orange-50 text-orange-800',
+                    [CheckinStatus.JUSTIFIED]: 'bg-indigo-50 text-indigo-800',
+                    [CalculatedStatus.REST]: 'bg-blue-50 text-blue-800',
+                    [CalculatedStatus.ABSENCE]: 'bg-red-50 text-red-800',
+                    [CalculatedStatus.EXTRA]: 'bg-yellow-50 text-yellow-800'
+                  };
+                  
+                  const statusLabels = {
+                    [CheckinStatus.NOT_SET]: 'Não Marcado',
+                    [CheckinStatus.PRESENT]: 'Presente',
+                    [CheckinStatus.ABSENT]: 'Ausente (marcado)',
+                    [CheckinStatus.HOSPITAL]: 'Hospital',
+                    [CheckinStatus.JUSTIFIED]: 'Justificado',
+                    [CalculatedStatus.REST]: 'Folga (calculado)',
+                    [CalculatedStatus.ABSENCE]: 'Falta (calculado)',
+                    [CalculatedStatus.EXTRA]: 'Extra (bônus)'
+                  };
+                  
+                  const bgClass = statusColors[log.status] || 'bg-gray-50';
+                  
+                  try {
+                    // Formatar data manualmente sem usar Date object para evitar problemas de timezone
+                    const [year, month, day] = log.date.split('-');
+                    
+                    // Criar date object apenas para obter o dia da semana
+                    const dateForWeekday = new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
+                    const weekdayNames = ['domingo', 'segunda-feira', 'terça-feira', 'quarta-feira', 'quinta-feira', 'sexta-feira', 'sábado'];
+                    const weekday = weekdayNames[dateForWeekday.getDay()];
+                    
+                    const formattedDate = `${day}/${month}/${year} (${weekday})`;
+                    
+                    return (
+                      <tr key={`${log.date}-${log.athleteId}-${index}`} className={`border-b border-gray-100 ${bgClass}`}>
+                        <td className="py-3 px-4 font-medium">
+                          {formattedDate}
+                        </td>
+                        <td className="py-3 px-4">
+                          <div className="flex items-center gap-2">
+                            <Avatar 
+                              name={log.athleteName} 
+                              photoUrl={athletes.find(a => a.id === log.athleteId)?.photoUrl} 
+                              size="sm" 
+                            />
+                            <span className="font-medium">{log.athleteName}</span>
+                          </div>
+                        </td>
+                        <td className="py-3 px-4 text-center">
+                          <span className="text-2xl">{log.emoji}</span>
+                        </td>
+                        <td className="py-3 px-4">
+                          <span className="font-medium">{statusLabels[log.status] || log.status}</span>
+                        </td>
+                      </tr>
+                    );
+                  } catch (error) {
+                    console.error('Erro ao formatar data:', log.date, error);
+                    return null;
+                  }
+                })}
+              </tbody>
+            </table>
+            
+            {attendanceLog.length === 0 && (
+              <div className="text-center py-12 text-gray-500">
+                Nenhum registro de presença encontrado.
+              </div>
+            )}
+          </div>
+        </Card>
+      )}
+    </div>
+  );
+}

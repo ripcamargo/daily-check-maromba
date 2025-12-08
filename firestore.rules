@@ -1,0 +1,129 @@
+// 🔐 Regras de Segurança do Firestore
+// Copie e cole estas regras no Firebase Console > Firestore Database > Regras
+
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // ==========================================
+    // ATHLETES COLLECTION
+    // ==========================================
+    match /athletes/{athleteId} {
+      // Permite leitura para todos
+      allow read: if true;
+      
+      // Permite criação e atualização para todos (ajuste conforme necessidade)
+      allow create, update: if true;
+      
+      // Permite deleção para todos (ajuste conforme necessidade)
+      allow delete: if true;
+      
+      // TODO: Adicionar autenticação
+      // allow write: if request.auth != null && request.auth.uid == 'admin-uid';
+    }
+    
+    // ==========================================
+    // SEASONS COLLECTION
+    // ==========================================
+    match /seasons/{seasonId} {
+      // Permite leitura para todos
+      allow read: if true;
+      
+      // Permite criação e atualização para todos (ajuste conforme necessidade)
+      allow create, update: if true;
+      
+      // Permite deleção para todos (ajuste conforme necessidade)
+      allow delete: if true;
+      
+      // ==========================================
+      // CHECKINS SUBCOLLECTION
+      // ==========================================
+      match /checkins/{checkinId} {
+        // Permite leitura para todos
+        allow read: if true;
+        
+        // Permite escrita para todos (ajuste conforme necessidade)
+        allow write: if true;
+        
+        // Validação de estrutura de dados
+        allow create, update: if request.resource.data.keys().hasAll(['date', 'athletes', 'updatedAt'])
+                              && request.resource.data.date is string
+                              && request.resource.data.athletes is map
+                              && request.resource.data.updatedAt is timestamp;
+      }
+      
+      // ==========================================
+      // PAYMENTS SUBCOLLECTION
+      // ==========================================
+      match /payments/{paymentId} {
+        // Permite leitura para todos
+        allow read: if true;
+        
+        // Permite escrita para todos (ajuste conforme necessidade)
+        allow write: if true;
+        
+        // Validação de estrutura de dados
+        allow create: if request.resource.data.keys().hasAll(['athleteId', 'date', 'value', 'createdAt'])
+                      && request.resource.data.athleteId is string
+                      && request.resource.data.date is timestamp
+                      && request.resource.data.value is number
+                      && request.resource.data.value > 0
+                      && request.resource.data.createdAt is timestamp;
+      }
+    }
+  }
+}
+
+// ==========================================
+// VERSÃO COM AUTENTICAÇÃO (FUTURA IMPLEMENTAÇÃO)
+// ==========================================
+// Descomente e ajuste quando implementar autenticação
+
+/*
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // Função helper para verificar se é admin
+    function isAdmin() {
+      return request.auth != null && 
+             exists(/databases/$(database)/documents/admins/$(request.auth.uid));
+    }
+    
+    // Função helper para verificar se é o próprio usuário
+    function isOwner(userId) {
+      return request.auth != null && request.auth.uid == userId;
+    }
+    
+    // ATHLETES - Admin pode tudo, usuários podem ler
+    match /athletes/{athleteId} {
+      allow read: if request.auth != null;
+      allow write: if isAdmin();
+    }
+    
+    // SEASONS - Admin pode tudo, usuários podem ler
+    match /seasons/{seasonId} {
+      allow read: if request.auth != null;
+      allow write: if isAdmin();
+      
+      // CHECKINS - Admin pode tudo, usuários podem ler
+      match /checkins/{checkinId} {
+        allow read: if request.auth != null;
+        allow write: if isAdmin();
+      }
+      
+      // PAYMENTS - Admin pode tudo, usuários podem ver seus próprios
+      match /payments/{paymentId} {
+        allow read: if request.auth != null && 
+                    (isAdmin() || resource.data.athleteId == request.auth.uid);
+        allow write: if isAdmin();
+      }
+    }
+    
+    // ADMINS - Apenas admins podem ler e escrever
+    match /admins/{adminId} {
+      allow read, write: if isAdmin();
+    }
+  }
+}
+*/

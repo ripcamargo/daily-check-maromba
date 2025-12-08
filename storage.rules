@@ -1,0 +1,94 @@
+// 🔐 Regras de Segurança do Firebase Storage
+// Copie e cole estas regras no Firebase Console > Storage > Regras
+
+rules_version = '2';
+service firebase.storage {
+  match /b/{bucket}/o {
+    
+    // ==========================================
+    // FOTOS DE ATLETAS
+    // ==========================================
+    match /athletes/{athleteId}/{allPaths=**} {
+      // Permite leitura para todos
+      allow read: if true;
+      
+      // Permite upload para todos (ajuste conforme necessidade)
+      allow write: if true;
+      
+      // Validações de arquivo
+      // allow create, update: if request.resource.size < 5 * 1024 * 1024  // Máximo 5MB
+      //                       && request.resource.contentType.matches('image/.*');  // Apenas imagens
+      
+      // TODO: Adicionar autenticação
+      // allow write: if request.auth != null;
+    }
+    
+    // ==========================================
+    // LOGOS DE TEMPORADAS
+    // ==========================================
+    match /seasons/{seasonId}/{allPaths=**} {
+      // Permite leitura para todos
+      allow read: if true;
+      
+      // Permite upload para todos (ajuste conforme necessidade)
+      allow write: if true;
+      
+      // Validações de arquivo
+      // allow create, update: if request.resource.size < 2 * 1024 * 1024  // Máximo 2MB
+      //                       && request.resource.contentType.matches('image/.*');  // Apenas imagens
+      
+      // TODO: Adicionar autenticação
+      // allow write: if request.auth != null;
+    }
+  }
+}
+
+// ==========================================
+// VERSÃO COM AUTENTICAÇÃO E VALIDAÇÕES (FUTURA IMPLEMENTAÇÃO)
+// ==========================================
+// Descomente e ajuste quando implementar autenticação
+
+/*
+rules_version = '2';
+service firebase.storage {
+  match /b/{bucket}/o {
+    
+    // Função helper para validar tamanho de imagem
+    function validImageSize(maxSizeMB) {
+      return request.resource.size < maxSizeMB * 1024 * 1024;
+    }
+    
+    // Função helper para validar tipo de arquivo
+    function isImage() {
+      return request.resource.contentType.matches('image/.*');
+    }
+    
+    // Função helper para verificar autenticação
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+    
+    // Função helper para verificar se é admin
+    function isAdmin() {
+      return request.auth != null && 
+             firestore.exists(/databases/(default)/documents/admins/$(request.auth.uid));
+    }
+    
+    // FOTOS DE ATLETAS
+    match /athletes/{athleteId}/{allPaths=**} {
+      allow read: if true;
+      allow write: if isAuthenticated() 
+                   && isImage() 
+                   && validImageSize(5);  // Máximo 5MB
+    }
+    
+    // LOGOS DE TEMPORADAS
+    match /seasons/{seasonId}/{allPaths=**} {
+      allow read: if true;
+      allow write: if isAdmin() 
+                   && isImage() 
+                   && validImageSize(2);  // Máximo 2MB
+    }
+  }
+}
+*/
