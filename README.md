@@ -2,6 +2,8 @@
 
 Aplicação web para gerenciar check-ins de academia entre amigos, com sistema de temporadas, rankings e controle financeiro de multas.
 
+🚀 **Live Demo:** https://daily-check-maromba.vercel.app
+
 ## 🚀 Funcionalidades
 
 - ✅ Cadastro de atletas com níveis de experiência
