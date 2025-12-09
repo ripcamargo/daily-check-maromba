@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Trophy, TrendingUp, DollarSign, Users, Download, Share2, Filter, Calendar } from 'lucide-react';
+import { Trophy, TrendingUp, DollarSign, Users, Download, Share2, Filter, Calendar, FileSpreadsheet } from 'lucide-react';
 import { Card } from '../components/Card';
 import { Avatar } from '../components/Avatar';
 import { Loading } from '../components/Loading';
@@ -22,6 +22,7 @@ import { generateWeeklyImage, downloadWeeklyImage, shareWeeklyImage } from '../u
 import { StatusEmoji, CheckinStatus, CalculatedStatus } from '../services/checkins';
 import { format, parseISO, startOfWeek, endOfWeek, subWeeks } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
+import * as XLSX from 'xlsx';
 
 export default function Dashboard() {
   const { currentSeason } = useSeason();
@@ -41,6 +42,9 @@ export default function Dashboard() {
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
   const [filteredCheckins, setFilteredCheckins] = useState([]);
+  const [logDateFilter, setLogDateFilter] = useState('');
+  const [logAthleteFilter, setLogAthleteFilter] = useState('');
+  const [logStatusFilter, setLogStatusFilter] = useState('');
 
   useEffect(() => {
     loadSeasons();
@@ -276,22 +280,73 @@ export default function Dashboard() {
     }
   };
 
+  const handleExportToExcel = () => {
+    try {
+      // Preparar dados para exportação
+      const statusLabels = {
+        [CheckinStatus.NOT_SET]: 'Não Marcado',
+        [CheckinStatus.PRESENT]: 'Presente',
+        [CheckinStatus.ABSENT]: 'Ausente',
+        [CheckinStatus.HOSPITAL]: 'Hospital',
+        [CheckinStatus.JUSTIFIED]: 'Justificado',
+        [CalculatedStatus.REST]: 'Folga',
+        [CalculatedStatus.ABSENCE]: 'Falta',
+        [CalculatedStatus.EXTRA]: 'Presença Bônus'
+      };
+
+      const excelData = attendanceLog.map(log => ({
+        'Data': format(parseISO(log.date), 'dd/MM/yyyy (EEEE)', { locale: ptBR }),
+        'Atleta': log.athleteName,
+        'Status': statusLabels[log.status],
+        'Emoji': StatusEmoji[log.status],
+        'Descrição': log.description
+      }));
+
+      // Criar worksheet
+      const ws = XLSX.utils.json_to_sheet(excelData);
+      
+      // Definir largura das colunas
+      ws['!cols'] = [
+        { wch: 25 }, // Data
+        { wch: 20 }, // Atleta
+        { wch: 20 }, // Status
+        { wch: 8 },  // Emoji
+        { wch: 50 }  // Descrição
+      ];
+
+      // Criar workbook
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, 'Log de Presença');
+
+      // Gerar nome do arquivo
+      const fileName = `log-presenca-${currentSeason.title.replace(/\s+/g, '-')}-${format(new Date(), 'yyyy-MM-dd')}.xlsx`;
+
+      // Fazer download
+      XLSX.writeFile(wb, fileName);
+      
+      setAlert({ type: 'success', message: 'Planilha exportada com sucesso!' });
+    } catch (error) {
+      console.error('Erro ao exportar Excel:', error);
+      setAlert({ type: 'error', message: 'Erro ao exportar planilha' });
+    }
+  };
+
   return (
-    <div className="container mx-auto px-4 py-8">
-      <div className="mb-6">
+    <div className="container mx-auto px-2 sm:px-4 py-4 sm:py-8">
+      <div className="mb-4 sm:mb-6">
         <div className="mb-4">
-          <h1 className="text-3xl font-bold text-gray-800 mb-2">Dashboard</h1>
+          <h1 className="text-2xl sm:text-3xl font-bold text-gray-800 mb-2">Dashboard</h1>
         </div>
 
         {/* Filtros */}
-        <div className="bg-white rounded-lg shadow-sm p-4 space-y-4">
+        <div className="bg-white rounded-lg shadow-sm p-3 sm:p-4 space-y-3 sm:space-y-4">
           {/* Filtro de Temporada */}
-          <div className="flex items-center gap-4">
-            <label className="font-medium text-gray-700 min-w-[120px]">Temporada:</label>
+          <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4">
+            <label className="font-medium text-gray-700 text-sm sm:text-base sm:min-w-[120px]">Temporada:</label>
             <select
               value={selectedSeasonId || ''}
               onChange={(e) => handleSeasonChange(e.target.value)}
-              className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="flex-1 px-3 sm:px-4 py-2 text-sm sm:text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             >
               {allSeasons.map(season => (
                 <option key={season.id} value={season.id}>
@@ -302,86 +357,86 @@ export default function Dashboard() {
           </div>
 
           {/* Filtro de Data */}
-          <div className="flex items-center gap-4">
-            <label className="font-medium text-gray-700 min-w-[120px]">Período:</label>
+          <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4">
+            <label className="font-medium text-gray-700 text-sm sm:text-base sm:min-w-[120px]">Período:</label>
             {!showDateFilter ? (
-              <div className="flex-1 flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <span className="text-gray-600">Toda a temporada</span>
+              <div className="flex-1 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2">
+                  <span className="text-sm sm:text-base text-gray-600">Toda a temporada</span>
                   <Button
                     onClick={handleShowDateFilter}
                     variant="outline"
-                    className="flex items-center gap-1.5 text-sm px-3 py-1.5"
+                    className="flex items-center gap-1.5 text-xs sm:text-sm px-2 sm:px-3 py-1.5 w-full sm:w-auto justify-center"
                   >
-                    <Filter className="w-3.5 h-3.5" />
+                    <Filter className="w-3 sm:w-3.5 h-3 sm:h-3.5" />
                     Filtrar por Data
                   </Button>
                 </div>
-                <div className="flex gap-2">
+                <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
                   <Button
                     onClick={() => handleGenerateWeeklyImage(false)}
                     disabled={generatingImage}
-                    className="flex items-center gap-1.5 text-sm px-3 py-1.5"
+                    className="flex items-center gap-1.5 text-xs sm:text-sm px-2 sm:px-3 py-1.5 justify-center"
                     variant="outline"
                   >
-                    <Download className="w-3.5 h-3.5" />
+                    <Download className="w-3 sm:w-3.5 h-3 sm:h-3.5" />
                     {generatingImage ? 'Gerando...' : 'Baixar Imagem'}
                   </Button>
                   <Button
                     onClick={() => handleGenerateWeeklyImage(true)}
                     disabled={generatingImage}
-                    className="flex items-center gap-1.5 text-sm px-3 py-1.5"
+                    className="flex items-center gap-1.5 text-xs sm:text-sm px-2 sm:px-3 py-1.5 justify-center"
                   >
-                    <Share2 className="w-3.5 h-3.5" />
+                    <Share2 className="w-3 sm:w-3.5 h-3 sm:h-3.5" />
                     {generatingImage ? 'Gerando...' : 'Compartilhar'}
                   </Button>
                 </div>
               </div>
             ) : (
-              <div className="flex-1 flex items-center justify-between gap-3">
-                <div className="flex items-center gap-3">
-                  <div className="flex items-center gap-2">
-                    <span className="text-sm text-gray-600">De:</span>
+              <div className="flex-1 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                <div className="flex flex-col sm:flex-row sm:items-center gap-3">
+                  <div className="flex flex-col sm:flex-row sm:items-center gap-2">
+                    <span className="text-xs sm:text-sm text-gray-600">De:</span>
                     <input
                       type="date"
                       value={startDate}
                       onChange={(e) => setStartDate(e.target.value)}
-                      className="px-3 py-1.5 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                      className="px-3 py-1.5 text-xs sm:text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
                     />
                   </div>
-                  <div className="flex items-center gap-2">
-                    <span className="text-sm text-gray-600">Até:</span>
+                  <div className="flex flex-col sm:flex-row sm:items-center gap-2">
+                    <span className="text-xs sm:text-sm text-gray-600">Até:</span>
                     <input
                       type="date"
                       value={endDate}
                       onChange={(e) => setEndDate(e.target.value)}
-                      className="px-3 py-1.5 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                      className="px-3 py-1.5 text-xs sm:text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
                     />
                   </div>
                   <Button
                     onClick={handleClearDateFilter}
                     variant="outline"
-                    className="text-red-600 hover:bg-red-50 text-sm px-3 py-1.5"
+                    className="text-red-600 hover:bg-red-50 text-xs sm:text-sm px-2 sm:px-3 py-1.5 w-full sm:w-auto"
                   >
                     Limpar Filtro
                   </Button>
                 </div>
-                <div className="flex gap-2">
+                <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
                   <Button
                     onClick={() => handleGenerateWeeklyImage(false)}
                     disabled={generatingImage}
-                    className="flex items-center gap-1.5 text-sm px-3 py-1.5"
+                    className="flex items-center gap-1.5 text-xs sm:text-sm px-2 sm:px-3 py-1.5 justify-center"
                     variant="outline"
                   >
-                    <Download className="w-3.5 h-3.5" />
+                    <Download className="w-3 sm:w-3.5 h-3 sm:h-3.5" />
                     {generatingImage ? 'Gerando...' : 'Baixar Imagem'}
                   </Button>
                   <Button
                     onClick={() => handleGenerateWeeklyImage(true)}
                     disabled={generatingImage}
-                    className="flex items-center gap-1.5 text-sm px-3 py-1.5"
+                    className="flex items-center gap-1.5 text-xs sm:text-sm px-2 sm:px-3 py-1.5 justify-center"
                   >
-                    <Share2 className="w-3.5 h-3.5" />
+                    <Share2 className="w-3 sm:w-3.5 h-3 sm:h-3.5" />
                     {generatingImage ? 'Gerando...' : 'Compartilhar'}
                   </Button>
                 </div>
@@ -392,7 +447,7 @@ export default function Dashboard() {
       </div>
 
       {alert && (
-        <div className="mb-6">
+        <div className="mb-4 sm:mb-6">
           <Alert
             type={alert.type}
             message={alert.message}
@@ -402,15 +457,15 @@ export default function Dashboard() {
       )}
 
       {/* Cards de Resumo */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-6 mb-6 sm:mb-8">
         <Card className="bg-gradient-to-br from-blue-50 to-blue-100">
-          <div className="flex items-center gap-4">
-            <div className="p-3 bg-blue-500 rounded-lg">
-              <Users className="w-8 h-8 text-white" />
+          <div className="flex flex-col sm:flex-row items-center gap-2 sm:gap-4">
+            <div className="p-2 sm:p-3 bg-blue-500 rounded-lg">
+              <Users className="w-6 sm:w-8 h-6 sm:h-8 text-white" />
             </div>
-            <div>
-              <p className="text-sm text-gray-600">Participantes</p>
-              <p className="text-2xl font-bold text-gray-800">
+            <div className="text-center sm:text-left">
+              <p className="text-xs sm:text-sm text-gray-600">Participantes</p>
+              <p className="text-xl sm:text-2xl font-bold text-gray-800">
                 {currentSeason.participants?.length || 0}
               </p>
             </div>
@@ -418,13 +473,13 @@ export default function Dashboard() {
         </Card>
 
         <Card className="bg-gradient-to-br from-green-50 to-green-100">
-          <div className="flex items-center gap-4">
-            <div className="p-3 bg-green-500 rounded-lg">
-              <DollarSign className="w-8 h-8 text-white" />
+          <div className="flex flex-col sm:flex-row items-center gap-2 sm:gap-4">
+            <div className="p-2 sm:p-3 bg-green-500 rounded-lg">
+              <DollarSign className="w-6 sm:w-8 h-6 sm:h-8 text-white" />
             </div>
-            <div>
-              <p className="text-sm text-gray-600">Total Pago</p>
-              <p className="text-2xl font-bold text-gray-800">
+            <div className="text-center sm:text-left">
+              <p className="text-xs sm:text-sm text-gray-600">Total Pago</p>
+              <p className="text-lg sm:text-2xl font-bold text-gray-800">
                 {formatCurrency(totalPaid)}
               </p>
             </div>
@@ -432,13 +487,13 @@ export default function Dashboard() {
         </Card>
 
         <Card className="bg-gradient-to-br from-yellow-50 to-yellow-100">
-          <div className="flex items-center gap-4">
-            <div className="p-3 bg-yellow-500 rounded-lg">
-              <TrendingUp className="w-8 h-8 text-white" />
+          <div className="flex flex-col sm:flex-row items-center gap-2 sm:gap-4">
+            <div className="p-2 sm:p-3 bg-yellow-500 rounded-lg">
+              <TrendingUp className="w-6 sm:w-8 h-6 sm:h-8 text-white" />
             </div>
-            <div>
-              <p className="text-sm text-gray-600">Previsto</p>
-              <p className="text-2xl font-bold text-gray-800">
+            <div className="text-center sm:text-left">
+              <p className="text-xs sm:text-sm text-gray-600">Previsto</p>
+              <p className="text-lg sm:text-2xl font-bold text-gray-800">
                 {formatCurrency(totalExpected)}
               </p>
             </div>
@@ -446,13 +501,13 @@ export default function Dashboard() {
         </Card>
 
         <Card className="bg-gradient-to-br from-red-50 to-red-100">
-          <div className="flex items-center gap-4">
-            <div className="p-3 bg-red-500 rounded-lg">
-              <DollarSign className="w-8 h-8 text-white" />
+          <div className="flex flex-col sm:flex-row items-center gap-2 sm:gap-4">
+            <div className="p-2 sm:p-3 bg-red-500 rounded-lg">
+              <DollarSign className="w-6 sm:w-8 h-6 sm:h-8 text-white" />
             </div>
-            <div>
-              <p className="text-sm text-gray-600">Devendo</p>
-              <p className="text-2xl font-bold text-gray-800">
+            <div className="text-center sm:text-left">
+              <p className="text-xs sm:text-sm text-gray-600">Devendo</p>
+              <p className="text-lg sm:text-2xl font-bold text-gray-800">
                 {formatCurrency(totalDebt)}
               </p>
             </div>
@@ -461,10 +516,10 @@ export default function Dashboard() {
       </div>
 
       {/* Tabs */}
-      <div className="flex gap-2 mb-6">
+      <div className="flex gap-2 mb-4 sm:mb-6 overflow-x-auto">
         <button
           onClick={() => setActiveTab('ranking')}
-          className={`px-6 py-3 rounded-lg font-medium transition-all ${
+          className={`flex-shrink-0 px-3 sm:px-6 py-2 sm:py-3 rounded-lg text-sm sm:text-base font-medium transition-all ${
             activeTab === 'ranking'
               ? 'bg-blue-600 text-white shadow-lg'
               : 'bg-white text-gray-700 hover:bg-gray-50'
@@ -474,7 +529,7 @@ export default function Dashboard() {
         </button>
         <button
           onClick={() => setActiveTab('financial')}
-          className={`px-6 py-3 rounded-lg font-medium transition-all ${
+          className={`flex-shrink-0 px-3 sm:px-6 py-2 sm:py-3 rounded-lg text-sm sm:text-base font-medium transition-all ${
             activeTab === 'financial'
               ? 'bg-blue-600 text-white shadow-lg'
               : 'bg-white text-gray-700 hover:bg-gray-50'
@@ -484,7 +539,7 @@ export default function Dashboard() {
         </button>
         <button
           onClick={() => setActiveTab('attendance')}
-          className={`px-6 py-3 rounded-lg font-medium transition-all ${
+          className={`flex-shrink-0 px-3 sm:px-6 py-2 sm:py-3 rounded-lg text-sm sm:text-base font-medium transition-all ${
             activeTab === 'attendance'
               ? 'bg-blue-600 text-white shadow-lg'
               : 'bg-white text-gray-700 hover:bg-gray-50'
@@ -498,18 +553,18 @@ export default function Dashboard() {
       {activeTab === 'ranking' && (
         <>
           <Card title="🏆 Ranking Principal" subtitle="Classificação geral dos atletas">
-            <div className="overflow-x-auto">
-              <table className="w-full">
+            <div className="overflow-x-auto -mx-2 sm:mx-0">
+              <table className="w-full min-w-[600px]">
                 <thead>
                   <tr className="border-b-2 border-gray-200">
-                    <th className="text-left py-3 px-4 font-semibold text-gray-700">Pos</th>
-                    <th className="text-left py-3 px-4 font-semibold text-gray-700">Atleta</th>
-                    <th className="text-center py-3 px-4 font-semibold text-gray-700">✅</th>
-                    <th className="text-center py-3 px-4 font-semibold text-gray-700">❌</th>
-                    <th className="text-center py-3 px-4 font-semibold text-gray-700">🔷</th>
-                    <th className="text-center py-3 px-4 font-semibold text-gray-700">📄</th>
-                    <th className="text-center py-3 px-4 font-semibold text-gray-700">🚑</th>
-                    <th className="text-center py-3 px-4 font-semibold text-gray-700">⭐</th>
+                    <th className="text-left py-2 px-1 sm:py-3 sm:px-4 font-semibold text-gray-700 text-xs sm:text-base">Pos</th>
+                    <th className="text-left py-2 px-1 sm:py-3 sm:px-4 font-semibold text-gray-700 text-xs sm:text-base">Atleta</th>
+                    <th className="text-center py-2 px-1 sm:py-3 sm:px-2 font-semibold text-gray-700 text-xs sm:text-base">✅</th>
+                    <th className="text-center py-2 px-1 sm:py-3 sm:px-2 font-semibold text-gray-700 text-xs sm:text-base">❌</th>
+                    <th className="text-center py-2 px-1 sm:py-3 sm:px-2 font-semibold text-gray-700 text-xs sm:text-base">🔷</th>
+                    <th className="text-center py-2 px-1 sm:py-3 sm:px-2 font-semibold text-gray-700 text-xs sm:text-base">📄</th>
+                    <th className="text-center py-2 px-1 sm:py-3 sm:px-2 font-semibold text-gray-700 text-xs sm:text-base">🚑</th>
+                    <th className="text-center py-2 px-1 sm:py-3 sm:px-2 font-semibold text-gray-700 text-xs sm:text-base">⭐</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -519,34 +574,35 @@ export default function Dashboard() {
                     
                     return (
                       <tr key={athlete.id} className={`border-b border-gray-100 ${bgColor}`}>
-                        <td className="py-4 px-4">
-                          <div className="flex items-center justify-center w-8 h-8 rounded-full font-bold text-white" 
+                        <td className="py-2 px-1 sm:py-4 sm:px-4">
+                          <div className="flex items-center justify-center w-6 h-6 sm:w-8 sm:h-8 rounded-full font-bold text-white text-xs sm:text-base" 
                                style={{ backgroundColor: index < 3 ? medalColors[index] : '#6b7280' }}>
                             {index + 1}
                           </div>
                         </td>
-                        <td className="py-4 px-4">
-                          <div className="flex items-center gap-3">
-                            <Avatar name={athlete.name} photoUrl={athlete.photoUrl} size="md" />
-                            <span className="font-bold text-gray-800">{athlete.name}</span>
+                        <td className="py-2 px-1 sm:py-4 sm:px-4">
+                          <div className="flex items-center gap-1 sm:gap-3">
+                            <Avatar name={athlete.name} photoUrl={athlete.photoUrl} size="sm" className="hidden sm:block" />
+                            <Avatar name={athlete.name} photoUrl={athlete.photoUrl} size="xs" className="sm:hidden" />
+                            <span className="font-bold text-gray-800 text-xs sm:text-base truncate max-w-[80px] sm:max-w-none">{athlete.name}</span>
                           </div>
                         </td>
-                        <td className="py-4 px-4 text-center font-bold text-green-600">
+                        <td className="py-2 px-1 sm:py-4 sm:px-2 text-center font-bold text-green-600 text-xs sm:text-base">
                           {athlete.stats.present}
                         </td>
-                        <td className="py-4 px-4 text-center font-bold text-red-600">
+                        <td className="py-2 px-1 sm:py-4 sm:px-2 text-center font-bold text-red-600 text-xs sm:text-base">
                           {athlete.stats.absence}
                         </td>
-                        <td className="py-4 px-4 text-center font-bold text-blue-600">
+                        <td className="py-2 px-1 sm:py-4 sm:px-2 text-center font-bold text-blue-600 text-xs sm:text-base">
                           {athlete.stats.rest}
                         </td>
-                        <td className="py-4 px-4 text-center font-bold text-indigo-600">
+                        <td className="py-2 px-1 sm:py-4 sm:px-2 text-center font-bold text-indigo-600 text-xs sm:text-base">
                           {athlete.stats.justified}
                         </td>
-                        <td className="py-4 px-4 text-center font-bold text-orange-600">
+                        <td className="py-2 px-1 sm:py-4 sm:px-2 text-center font-bold text-orange-600 text-xs sm:text-base">
                           {athlete.stats.hospital}
                         </td>
-                        <td className="py-4 px-4 text-center font-bold text-yellow-600">
+                        <td className="py-2 px-1 sm:py-4 sm:px-2 text-center font-bold text-yellow-600 text-xs sm:text-base">
                           {athlete.stats.extra}
                         </td>
                       </tr>
@@ -702,7 +758,67 @@ export default function Dashboard() {
       )}
 
       {activeTab === 'attendance' && (
-        <Card title="📋 Log de Presença" subtitle="Histórico detalhado de check-ins">
+        <Card 
+          title="📋 Log de Presença" 
+          subtitle="Histórico detalhado de check-ins"
+          actions={
+            <Button
+              onClick={handleExportToExcel}
+              variant="secondary"
+              className="flex items-center gap-2 text-sm px-3 py-1.5"
+            >
+              <FileSpreadsheet className="w-4 h-4" />
+              Exportar Excel
+            </Button>
+          }
+        >
+          {/* Filtros */}
+          <div className="mb-4 grid grid-cols-1 md:grid-cols-3 gap-3">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Filtrar por Data
+              </label>
+              <input
+                type="date"
+                value={logDateFilter}
+                onChange={(e) => setLogDateFilter(e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"
+                placeholder="Todas as datas"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Filtrar por Atleta
+              </label>
+              <input
+                type="text"
+                value={logAthleteFilter}
+                onChange={(e) => setLogAthleteFilter(e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"
+                placeholder="Digite o nome..."
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Filtrar por Status
+              </label>
+              <select
+                value={logStatusFilter}
+                onChange={(e) => setLogStatusFilter(e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"
+              >
+                <option value="">Todos os status</option>
+                <option value={CheckinStatus.PRESENT}>Presente</option>
+                <option value={CheckinStatus.ABSENT}>Ausente</option>
+                <option value={CheckinStatus.HOSPITAL}>Hospital</option>
+                <option value={CheckinStatus.JUSTIFIED}>Justificado</option>
+                <option value={CalculatedStatus.REST}>Folga</option>
+                <option value={CalculatedStatus.ABSENCE}>Falta</option>
+                <option value={CalculatedStatus.EXTRA}>Presença Bônus</option>
+              </select>
+            </div>
+          </div>
+
           <div className="overflow-x-auto">
             <table className="w-full">
               <thead>
@@ -714,7 +830,20 @@ export default function Dashboard() {
                 </tr>
               </thead>
               <tbody>
-                {attendanceLog.map((log, index) => {
+                {attendanceLog
+                  .filter(log => {
+                    // Filtro por data
+                    if (logDateFilter && log.date !== logDateFilter) return false;
+                    
+                    // Filtro por atleta (case insensitive)
+                    if (logAthleteFilter && !log.athleteName.toLowerCase().includes(logAthleteFilter.toLowerCase())) return false;
+                    
+                    // Filtro por status
+                    if (logStatusFilter && log.status !== logStatusFilter) return false;
+                    
+                    return true;
+                  })
+                  .map((log, index) => {
                   const statusColors = {
                     [CheckinStatus.NOT_SET]: 'bg-gray-50 text-gray-600',
                     [CheckinStatus.PRESENT]: 'bg-green-50 text-green-800',
@@ -784,6 +913,17 @@ export default function Dashboard() {
             {attendanceLog.length === 0 && (
               <div className="text-center py-12 text-gray-500">
                 Nenhum registro de presença encontrado.
+              </div>
+            )}
+            
+            {attendanceLog.length > 0 && attendanceLog.filter(log => {
+              if (logDateFilter && log.date !== logDateFilter) return false;
+              if (logAthleteFilter && !log.athleteName.toLowerCase().includes(logAthleteFilter.toLowerCase())) return false;
+              if (logStatusFilter && log.status !== logStatusFilter) return false;
+              return true;
+            }).length === 0 && (
+              <div className="text-center py-12 text-gray-500">
+                Nenhum registro encontrado com os filtros aplicados.
               </div>
             )}
           </div>

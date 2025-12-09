@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Plus, Settings, CheckCircle, Calendar as CalendarIcon } from 'lucide-react';
+import { Plus, Settings, CheckCircle, Calendar as CalendarIcon, RefreshCw } from 'lucide-react';
 import { Card } from '../components/Card';
 import { Button } from '../components/Button';
 import { Modal } from '../components/Modal';
@@ -15,6 +15,7 @@ import {
   getAllSeasons,
   finalizeSeason
 } from '../services/seasons';
+import { getAllCheckins, processCheckins, saveCheckins, CheckinStatus } from '../services/checkins';
 import { formatDate, formatCurrency } from '../utils/formatters';
 import { useEffect } from 'react';
 
@@ -27,12 +28,14 @@ export default function Seasons() {
   const [isConfigModalOpen, setIsConfigModalOpen] = useState(false);
   const [alert, setAlert] = useState(null);
   const [uploading, setUploading] = useState(false);
+  const [reprocessing, setReprocessing] = useState(false);
   const [formData, setFormData] = useState({
     title: '',
     startDate: '',
     endDate: '',
     finePerAbsence: '',
     weeklyRestLimit: '',
+    weekStartsOn: '1',
     participants: [],
     logoFile: null,
     backgroundFile: null,
@@ -62,6 +65,7 @@ export default function Seasons() {
       endDate: '',
       finePerAbsence: '10',
       weeklyRestLimit: '2',
+      weekStartsOn: '1',
       participants: [],
       logoFile: null,
       backgroundFile: null,
@@ -78,6 +82,7 @@ export default function Seasons() {
         endDate: formatDate(currentSeason.endDate, 'yyyy-MM-dd'),
         finePerAbsence: currentSeason.finePerAbsence.toString(),
         weeklyRestLimit: currentSeason.weeklyRestLimit.toString(),
+        weekStartsOn: (currentSeason.weekStartsOn || 1).toString(),
         participants: currentSeason.participants || [],
         logoFile: null,
         backgroundFile: null,
@@ -100,6 +105,7 @@ export default function Seasons() {
         endDate: formData.endDate,
         finePerAbsence: parseFloat(formData.finePerAbsence),
         weeklyRestLimit: parseInt(formData.weeklyRestLimit),
+        weekStartsOn: parseInt(formData.weekStartsOn),
         participants: formData.participants,
         neutralDays: formData.neutralDays,
         bonusDates: formData.bonusDates,
@@ -148,6 +154,7 @@ export default function Seasons() {
         endDate: formData.endDate,
         finePerAbsence: parseFloat(formData.finePerAbsence),
         weeklyRestLimit: parseInt(formData.weeklyRestLimit),
+        weekStartsOn: parseInt(formData.weekStartsOn),
         participants: formData.participants,
         neutralDays: formData.neutralDays,
         bonusDates: formData.bonusDates
@@ -195,6 +202,78 @@ export default function Seasons() {
         ? prev.participants.filter(id => id !== athleteId)
         : [...prev.participants, athleteId]
     }));
+  };
+
+  const handleReprocessCheckins = async () => {
+    if (!currentSeason) {
+      setAlert({ type: 'error', message: 'Nenhuma temporada ativa encontrada' });
+      return;
+    }
+
+    if (!window.confirm(
+      'Deseja reprocessar todos os check-ins da temporada atual?\n\n' +
+      'Isso irá recalcular o status de todos os atletas (folgas/faltas) ' +
+      'baseado nas regras atuais. Esta ação pode levar alguns minutos.'
+    )) return;
+
+    try {
+      setReprocessing(true);
+      setAlert({ type: 'info', message: 'Reprocessando check-ins... Aguarde.' });
+
+      // Buscar todos os check-ins da temporada
+      const allCheckins = await getAllCheckins(currentSeason.id);
+      
+      // Ordenar por data para processar em ordem cronológica
+      const sortedCheckins = allCheckins.sort((a, b) => a.date.localeCompare(b.date));
+      
+      let processedCount = 0;
+
+      // Garantir que a temporada tem todos os campos necessários
+      const seasonWithDefaults = {
+        id: currentSeason.id,
+        title: currentSeason.title,
+        weekStartsOn: currentSeason.weekStartsOn ?? 1,
+        weeklyRestLimit: currentSeason.weeklyRestLimit ?? 2,
+        bonusDates: currentSeason.bonusDates || [],
+        participants: currentSeason.participants || []
+      };
+
+      console.log('Temporada para reprocessamento:', seasonWithDefaults);
+      console.log('Total de check-ins:', sortedCheckins.length);
+
+      // Reprocessar cada check-in
+      for (const checkin of sortedCheckins) {
+        console.log(`Processando ${checkin.date}...`);
+        
+        // Preparar dados no formato que processCheckins espera
+        const rawCheckins = {};
+        for (const [athleteId, athleteData] of Object.entries(checkin.athletes || {})) {
+          rawCheckins[athleteId] = {
+            status: athleteData.originalStatus || athleteData.status
+          };
+        }
+
+        // Reprocessar com as regras atuais
+        const processedCheckins = await processCheckins(seasonWithDefaults, checkin.date, rawCheckins);
+        
+        // Salvar de volta (passando rawCheckins e season para que saveCheckins possa reprocessar)
+        await saveCheckins(currentSeason.id, checkin.date, rawCheckins, seasonWithDefaults);
+        processedCount++;
+      }
+
+      setAlert({ 
+        type: 'success', 
+        message: `✅ Reprocessamento concluído! ${processedCount} check-ins atualizados.` 
+      });
+    } catch (error) {
+      console.error('Erro ao reprocessar:', error);
+      setAlert({ 
+        type: 'error', 
+        message: `Erro ao reprocessar check-ins: ${error.message}` 
+      });
+    } finally {
+      setReprocessing(false);
+    }
   };
 
   if (loading) {
@@ -397,6 +476,27 @@ export default function Seasons() {
 
           <div className="mb-4">
             <label className="block text-sm font-medium text-gray-700 mb-2">
+              Dia de Início da Semana
+            </label>
+            <select
+              value={formData.weekStartsOn}
+              onChange={(e) => setFormData({ ...formData, weekStartsOn: e.target.value })}
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg"
+              required
+            >
+              <option value="0">Domingo</option>
+              <option value="1">Segunda-feira</option>
+              <option value="2">Terça-feira</option>
+              <option value="3">Quarta-feira</option>
+              <option value="4">Quinta-feira</option>
+              <option value="5">Sexta-feira</option>
+              <option value="6">Sábado</option>
+            </select>
+            <p className="text-sm text-gray-500 mt-1">Escolha o dia em que a semana útil começa para cálculo de faltas</p>
+          </div>
+
+          <div className="mb-4">
+            <label className="block text-sm font-medium text-gray-700 mb-2">
               Logo da Temporada
             </label>
             <input
@@ -507,6 +607,27 @@ export default function Seasons() {
 
           <div className="mb-4">
             <label className="block text-sm font-medium text-gray-700 mb-2">
+              Dia de Início da Semana
+            </label>
+            <select
+              value={formData.weekStartsOn}
+              onChange={(e) => setFormData({ ...formData, weekStartsOn: e.target.value })}
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg"
+              required
+            >
+              <option value="0">Domingo</option>
+              <option value="1">Segunda-feira</option>
+              <option value="2">Terça-feira</option>
+              <option value="3">Quarta-feira</option>
+              <option value="4">Quinta-feira</option>
+              <option value="5">Sexta-feira</option>
+              <option value="6">Sábado</option>
+            </select>
+            <p className="text-sm text-gray-500 mt-1">Escolha o dia em que a semana útil começa para cálculo de faltas</p>
+          </div>
+
+          <div className="mb-4">
+            <label className="block text-sm font-medium text-gray-700 mb-2">
               Logo da Temporada
             </label>
             <input
@@ -589,6 +710,29 @@ export default function Seasons() {
               >
                 + Adicionar Data Bônus
               </button>
+            </div>
+          </div>
+
+          <div className="border-t pt-6 mt-6">
+            <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-4">
+              <h4 className="font-semibold text-yellow-800 mb-2 flex items-center gap-2">
+                <RefreshCw className="w-5 h-5" />
+                Reprocessar Check-ins
+              </h4>
+              <p className="text-sm text-yellow-700 mb-3">
+                Use esta função para recalcular todos os status de presença (folgas/faltas) 
+                baseado nas regras atuais da temporada. Útil quando você altera o limite de 
+                folgas ou o dia de início da semana.
+              </p>
+              <Button
+                type="button"
+                onClick={handleReprocessCheckins}
+                disabled={reprocessing}
+                className="flex items-center gap-2"
+              >
+                <RefreshCw className={`w-4 h-4 ${reprocessing ? 'animate-spin' : ''}`} />
+                {reprocessing ? 'Reprocessando...' : 'Reprocessar Todos os Check-ins'}
+              </Button>
             </div>
           </div>
 

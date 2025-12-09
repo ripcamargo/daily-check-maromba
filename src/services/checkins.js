@@ -32,13 +32,15 @@ export const CalculatedStatus = {
 };
 
 /**
- * Retorna o início e fim da semana (segunda a domingo) para uma data
+ * Retorna o início e fim da semana para uma data
+ * @param {string|Date} date - Data de referência
+ * @param {number} weekStartsOn - Dia de início da semana (0=domingo, 1=segunda, etc)
  */
-export const getWeekBounds = (date) => {
+export const getWeekBounds = (date, weekStartsOn = 1) => {
   const parsedDate = typeof date === 'string' ? parseISO(date) : date;
   return {
-    start: startOfWeek(parsedDate, { weekStartsOn: 1, locale: ptBR }), // 1 = segunda
-    end: endOfWeek(parsedDate, { weekStartsOn: 1, locale: ptBR })
+    start: startOfWeek(parsedDate, { weekStartsOn, locale: ptBR }),
+    end: endOfWeek(parsedDate, { weekStartsOn, locale: ptBR })
   };
 };
 
@@ -103,11 +105,14 @@ export const StatusColor = {
 };
 
 /**
- * Busca todos os check-ins de uma semana (segunda a domingo)
+ * Busca todos os check-ins de uma semana
+ * @param {string} seasonId - ID da temporada
+ * @param {string|Date} date - Data de referência
+ * @param {number} weekStartsOn - Dia de início da semana (0=domingo, 1=segunda, etc)
  */
-export const getWeekCheckins = async (seasonId, date) => {
+export const getWeekCheckins = async (seasonId, date, weekStartsOn = 1) => {
   try {
-    const { start, end } = getWeekBounds(date);
+    const { start, end } = getWeekBounds(date, weekStartsOn);
     const startStr = format(start, 'yyyy-MM-dd');
     const endStr = format(end, 'yyyy-MM-dd');
     
@@ -152,7 +157,8 @@ export const countWeeklyAbsences = (weekCheckins, athleteId) => {
  */
 export const processCheckins = async (season, date, rawCheckins) => {
   try {
-    const weekCheckins = await getWeekCheckins(season.id, date);
+    const weekStartsOn = season.weekStartsOn ?? 1; // Default segunda-feira
+    const weekCheckins = await getWeekCheckins(season.id, date, weekStartsOn);
     const bonusDates = season.bonusDates || [];
     const isBonusDate = bonusDates.includes(date);
     const processedCheckins = {};
@@ -167,19 +173,14 @@ export const processCheckins = async (season, date, rawCheckins) => {
         continue;
       }
       
-      // Conta ausências do atleta na semana (excluindo a data atual)
-      const weekCheckinsExcludingToday = weekCheckins.filter(c => c.date !== date);
+      // Conta ausências do atleta na semana (excluindo a data atual e datas futuras)
+      const weekCheckinsExcludingToday = weekCheckins.filter(c => c.date !== date && c.date < date);
       let absencesInWeek = countWeeklyAbsences(weekCheckinsExcludingToday, athleteId);
       
       // Se hoje é ausente, incrementa o contador ANTES de calcular
       if (userStatus === CheckinStatus.ABSENT) {
         absencesInWeek++;
       }
-      
-      console.log(`Atleta ${athleteId} - Data ${date}:`);
-      console.log(`  Ausências na semana (incluindo hoje): ${absencesInWeek}`);
-      console.log(`  Status marcado: ${userStatus}`);
-      console.log(`  Limite semanal: ${season.weeklyRestLimit}`);
       
       // Calcula status final
       const finalStatus = calculateFinalStatus(
@@ -188,8 +189,6 @@ export const processCheckins = async (season, date, rawCheckins) => {
         absencesInWeek,
         season.weeklyRestLimit
       );
-      
-      console.log(`  Status final calculado: ${finalStatus}`);
       
       processedCheckins[athleteId] = { 
         status: finalStatus,

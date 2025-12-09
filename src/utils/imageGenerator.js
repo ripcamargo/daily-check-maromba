@@ -30,7 +30,7 @@ export const generateWeeklyImage = async (season, athletes, backgroundImageUrl, 
       // Criar canvas
       const canvas = document.createElement('canvas');
       canvas.width = 720;
-      canvas.height = 1480;
+      canvas.height = 1000;
       const ctx = canvas.getContext('2d');
 
       // Carregar imagem de background
@@ -43,7 +43,7 @@ export const generateWeeklyImage = async (season, athletes, backgroundImageUrl, 
 
         // Configurações de estilo
         const startX = 50;
-        const startY = 250;
+        const startY = 180;
         const cellWidth = 70;
         const cellHeight = 70;
         const headerHeight = 50;
@@ -80,16 +80,16 @@ export const generateWeeklyImage = async (season, athletes, backgroundImageUrl, 
 
         // Desenhar título com período
         ctx.fillStyle = '#ffffff';
-        ctx.font = 'bold 36px Arial';
+        ctx.font = 'bold 36px Segoe UI';
         ctx.textAlign = 'center';
         const title = `${format(weekStart, 'dd', { locale: ptBR })} a ${format(weekEnd, 'dd \'de\' MMMM', { locale: ptBR })}`;
-        ctx.fillText(title, canvas.width / 2, 140);
+        ctx.fillText(title, canvas.width / 2, 80);
 
         // Desenhar cabeçalho dos dias da semana
-        ctx.font = 'bold 18px Arial';
+        ctx.font = 'bold 18px Segoe UI';
         const daysOfWeek = ['Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb', 'Dom'];
         daysOfWeek.forEach((day, index) => {
-          const x = startX + 160 + (index * cellWidth) + (cellWidth / 2);
+          const x = startX + 120 + (index * cellWidth) + (cellWidth / 2);
           ctx.fillText(day, x, startY - 10);
         });
 
@@ -100,7 +100,7 @@ export const generateWeeklyImage = async (season, athletes, backgroundImageUrl, 
           const y = startY + (athleteIndex * cellHeight);
 
           // Nome do atleta (abreviado)
-          ctx.font = 'bold 20px Arial';
+          ctx.font = 'bold 20px Segoe UI';
           ctx.textAlign = 'left';
           ctx.fillStyle = '#ffffff';
           const abbreviatedName = abbreviateName(athlete.name);
@@ -108,7 +108,7 @@ export const generateWeeklyImage = async (season, athletes, backgroundImageUrl, 
 
           // Desenhar células dos dias
           weekDays.forEach((day, dayIndex) => {
-            const x = startX + 160 + (dayIndex * cellWidth);
+            const x = startX + 120 + (dayIndex * cellWidth);
             const dateStr = format(day, 'yyyy-MM-dd');
             
             // Buscar check-in do dia
@@ -195,9 +195,9 @@ export const generateWeeklyImage = async (season, athletes, backgroundImageUrl, 
 const getStatusEmoji = (status) => {
   const emojiMap = {
     [CheckinStatus.PRESENT]: '✅',
-    [CheckinStatus.HOSPITAL]: '🏥',
+    [CheckinStatus.HOSPITAL]: '🚑',
     [CheckinStatus.JUSTIFIED]: '📄',
-    [CalculatedStatus.REST]: '🛌',
+    [CalculatedStatus.REST]: '🔷',
     [CalculatedStatus.ABSENCE]: '❌',
     [CalculatedStatus.EXTRA]: '⭐',
     [CheckinStatus.NOT_SET]: '-'

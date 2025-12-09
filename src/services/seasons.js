@@ -15,14 +15,22 @@ import { db } from './firebase';
 const COLLECTION_NAME = 'seasons';
 
 /**
+ * Converte string de data para Date object no timezone local
+ */
+const parseLocalDate = (dateString) => {
+  const [year, month, day] = dateString.split('-').map(Number);
+  return new Date(year, month - 1, day, 12, 0, 0); // Meio-dia local para evitar problemas de timezone
+};
+
+/**
  * Cria uma nova temporada
  */
 export const createSeason = async (seasonData) => {
   try {
     const docRef = await addDoc(collection(db, COLLECTION_NAME), {
       ...seasonData,
-      startDate: new Date(seasonData.startDate),
-      endDate: new Date(seasonData.endDate),
+      startDate: parseLocalDate(seasonData.startDate),
+      endDate: parseLocalDate(seasonData.endDate),
       neutralDays: seasonData.neutralDays || [],
       createdAt: new Date(),
       active: true
@@ -133,17 +141,17 @@ export const getSeasonById = async (seasonId) => {
  */
 export const updateSeason = async (seasonId, updates) => {
   try {
-    const docRef = doc(db, COLLECTION_NAME, seasonId);
+    const seasonRef = doc(db, COLLECTION_NAME, seasonId);
     const updateData = { ...updates };
     
     if (updates.startDate) {
-      updateData.startDate = new Date(updates.startDate);
+      updateData.startDate = parseLocalDate(updates.startDate);
     }
     if (updates.endDate) {
-      updateData.endDate = new Date(updates.endDate);
+      updateData.endDate = parseLocalDate(updates.endDate);
     }
     
-    await updateDoc(docRef, updateData);
+    await updateDoc(seasonRef, updateData);
     return { id: seasonId, ...updateData };
   } catch (error) {
     console.error('Erro ao atualizar temporada:', error);

@@ -40,6 +40,7 @@ export const calculateStats = (checkins, athleteId) => {
         break;
       case CalculatedStatus.EXTRA:
         stats.extra++;
+        stats.present++; // EXTRA também conta como presença
         break;
       default:
         stats.notSet++;
