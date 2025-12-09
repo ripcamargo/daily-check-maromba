@@ -2,16 +2,19 @@ import { initializeApp } from 'firebase/app';
 import { getFirestore, collection, getDocs, query, where, doc, setDoc } from 'firebase/firestore';
 import { format, startOfWeek, endOfWeek, parseISO } from 'date-fns';
 import pkg from 'date-fns/locale/pt-BR/index.js';
+import dotenv from 'dotenv';
 const { ptBR } = pkg;
+
+dotenv.config();
 
 // Configuração do Firebase
 const firebaseConfig = {
-  apiKey: "AIzaSyC_eN8hX_VVsZ06hXyuWWjm_4Z2oN0KQTA",
-  authDomain: "dailycheckmaromba.firebaseapp.com",
-  projectId: "dailycheckmaromba",
-  storageBucket: "dailycheckmaromba.firebasestorage.app",
-  messagingSenderId: "622859828658",
-  appId: "1:622859828658:web:f803df36085d17c6f43dc8f43dc8"
+  apiKey: process.env.VITE_FIREBASE_API_KEY,
+  authDomain: process.env.VITE_FIREBASE_AUTH_DOMAIN,
+  projectId: process.env.VITE_FIREBASE_PROJECT_ID,
+  storageBucket: process.env.VITE_FIREBASE_STORAGE_BUCKET,
+  messagingSenderId: process.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
+  appId: process.env.VITE_FIREBASE_APP_ID
 };
 
 const app = initializeApp(firebaseConfig);

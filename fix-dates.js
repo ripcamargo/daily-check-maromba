@@ -1,13 +1,16 @@
 import { initializeApp } from 'firebase/app';
 import { getFirestore, collection, getDocs, query, where, doc, setDoc, deleteDoc } from 'firebase/firestore';
+import dotenv from 'dotenv';
+
+dotenv.config();
 
 const firebaseConfig = {
-  apiKey: "AIzaSyDe7l90JD5BCL58ip_L6kwAJdbNEKPMvi8",
-  authDomain: "dailycheckmaromba.firebaseapp.com",
-  projectId: "dailycheckmaromba",
-  storageBucket: "dailycheckmaromba.firebasestorage.app",
-  messagingSenderId: "906972202428",
-  appId: "1:906972202428:web:c45c22edd40bb7e06208a7"
+  apiKey: process.env.VITE_FIREBASE_API_KEY,
+  authDomain: process.env.VITE_FIREBASE_AUTH_DOMAIN,
+  projectId: process.env.VITE_FIREBASE_PROJECT_ID,
+  storageBucket: process.env.VITE_FIREBASE_STORAGE_BUCKET,
+  messagingSenderId: process.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
+  appId: process.env.VITE_FIREBASE_APP_ID
 };
 
 const app = initializeApp(firebaseConfig);
