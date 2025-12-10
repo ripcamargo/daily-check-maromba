@@ -75,12 +75,21 @@ export default function Checkin() {
 
       setCheckins(initialCheckins);
       setHasSavedData(hasData);
-      setIsEditing(!hasData);
+      setIsEditing(!hasData); // Se tem dados salvos, começa em modo visualização
     } catch (error) {
       setAlert({ type: 'error', message: 'Erro ao carregar check-ins' });
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleClear = () => {
+    // Limpa todos os check-ins do dia (marca todos como NOT_SET)
+    const clearedCheckins = {};
+    currentSeason.participants?.forEach(athleteId => {
+      clearedCheckins[athleteId] = { status: CheckinStatus.NOT_SET };
+    });
+    setCheckins(clearedCheckins);
   };
 
   const handleStatusChange = (athleteId, status) => {
@@ -326,10 +335,10 @@ export default function Checkin() {
               <>
                 <Button
                   variant="secondary"
-                  onClick={loadCheckins}
+                  onClick={handleClear}
                   disabled={saving}
                 >
-                  Resetar
+                  Limpar
                 </Button>
                 <Button
                   onClick={handleSave}
