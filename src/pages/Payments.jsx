@@ -10,12 +10,14 @@ import { Loading } from '../components/Loading';
 import { Avatar } from '../components/Avatar';
 import { useSeason } from '../context/SeasonContext';
 import { useAthletes } from '../context/AthletesContext';
+import { useAuth } from '../context/AuthContext';
 import { addPayment, getAllPayments } from '../services/payments';
 import { formatDate, formatCurrency } from '../utils/formatters';
 
 export default function Payments() {
   const { currentSeason } = useSeason();
   const { athletes, getAthleteById } = useAthletes();
+  const { isAdmin } = useAuth();
   const [payments, setPayments] = useState([]);
   const [loading, setLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -119,10 +121,12 @@ export default function Payments() {
           <h1 className="text-3xl font-bold text-gray-800">Pagamentos</h1>
           <p className="text-gray-600 mt-2">Registre os pagamentos de multas</p>
         </div>
-        <Button onClick={handleOpenModal} className="flex items-center gap-2">
-          <Plus className="w-5 h-5" />
-          Registrar Pagamento
-        </Button>
+        {isAdmin && (
+          <Button onClick={handleOpenModal} className="flex items-center gap-2">
+            <Plus className="w-5 h-5" />
+            Registrar Pagamento
+          </Button>
+        )}
       </div>
 
       {alert && (
@@ -185,7 +189,9 @@ export default function Payments() {
         ) : payments.length === 0 ? (
           <div className="text-center py-12">
             <p className="text-gray-500 mb-4">Nenhum pagamento registrado ainda.</p>
-            <Button onClick={handleOpenModal}>Registrar Primeiro Pagamento</Button>
+            {isAdmin && (
+              <Button onClick={handleOpenModal}>Registrar Primeiro Pagamento</Button>
+            )}
           </div>
         ) : (
           <div className="overflow-x-auto">

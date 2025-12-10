@@ -7,6 +7,7 @@ import { Alert } from '../components/Alert';
 import { Button } from '../components/Button';
 import { useSeason } from '../context/SeasonContext';
 import { useAthletes } from '../context/AthletesContext';
+import { useAuth } from '../context/AuthContext';
 import { getAllCheckins } from '../services/checkins';
 import { getAllSeasons } from '../services/seasons';
 import { getAllPayments, calculateTotalPaid } from '../services/payments';
@@ -27,6 +28,7 @@ import * as XLSX from 'xlsx';
 export default function Dashboard() {
   const { currentSeason } = useSeason();
   const { athletes, getAthleteById } = useAthletes();
+  const { isAdmin } = useAuth();
   const [loading, setLoading] = useState(true);
   const [checkins, setCheckins] = useState([]);
   const [payments, setPayments] = useState([]);
@@ -45,6 +47,8 @@ export default function Dashboard() {
   const [logDateFilter, setLogDateFilter] = useState('');
   const [logAthleteFilter, setLogAthleteFilter] = useState('');
   const [logStatusFilter, setLogStatusFilter] = useState('');
+  const [showImageGenerator, setShowImageGenerator] = useState(false);
+  const [imageDate, setImageDate] = useState(format(new Date(), 'yyyy-MM-dd'));
 
   useEffect(() => {
     loadSeasons();
@@ -160,6 +164,9 @@ export default function Dashboard() {
         });
       });
       
+      // Ordenar do mais recente para o mais antigo
+      log.sort((a, b) => b.date.localeCompare(a.date));
+      
       setAttendanceLog(log);
 
       // Calcula dados de ranking
@@ -230,25 +237,22 @@ export default function Dashboard() {
   const selectedSeason = allSeasons.find(s => s.id === selectedSeasonId) || currentSeason;
 
   const handleGenerateWeeklyImage = async (shouldShare = false) => {
-    // Validar se há filtro de data
-    if (!startDate || !endDate) {
-      setAlert({ type: 'error', message: 'Por favor, filtre pela semana desejada antes de emitir a imagem' });
-      return;
-    }
-
-    // Validar se é exatamente 7 dias
-    const start = new Date(startDate);
-    const end = new Date(endDate);
-    const diffTime = Math.abs(end - start);
-    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1;
-
-    if (diffDays !== 7) {
-      setAlert({ type: 'error', message: 'Você excedeu a quantidade de dias. Selecione um intervalo semanal de 7 dias' });
+    if (!imageDate) {
+      setAlert({ type: 'error', message: 'Por favor, selecione uma data' });
       return;
     }
 
     try {
       setGeneratingImage(true);
+      
+      // Calcular início e fim da semana baseado na data selecionada
+      const selectedDate = parseISO(imageDate);
+      const weekStartsOn = currentSeason?.weekStartsOn || 1; // 1 = segunda-feira
+      const weekStart = startOfWeek(selectedDate, { weekStartsOn });
+      const weekEnd = endOfWeek(selectedDate, { weekStartsOn });
+      
+      const weekStartDate = format(weekStart, 'yyyy-MM-dd');
+      const weekEndDate = format(weekEnd, 'yyyy-MM-dd');
       
       // Filtrar apenas atletas participantes da temporada
       const participantAthletes = athletes.filter(athlete => 
@@ -262,8 +266,8 @@ export default function Dashboard() {
         currentSeason, 
         participantAthletes, 
         backgroundUrl,
-        startDate,
-        endDate
+        weekStartDate,
+        weekEndDate
       );
       
       if (shouldShare) {
@@ -334,17 +338,27 @@ export default function Dashboard() {
   return (
     <div className="container mx-auto px-2 sm:px-4 py-4 sm:py-8">
       <div className="mb-4 sm:mb-6">
-        <div className="mb-4">
-          <h1 className="text-2xl sm:text-3xl font-bold text-gray-800 mb-2">Dashboard</h1>
+        <div className="flex items-center justify-between mb-4">
+          <h1 className="text-2xl sm:text-3xl font-bold text-gray-800">Dashboard</h1>
+          {isAdmin && (
+            <Button
+              onClick={() => setShowImageGenerator(!showImageGenerator)}
+              variant="outline"
+              className="flex items-center gap-2 text-xs sm:text-sm px-2 sm:px-3 py-1.5"
+            >
+              <Download className="w-3.5 sm:w-4 h-3.5 sm:h-4" />
+              Gerar Imagem
+            </Button>
+          )}
         </div>
 
         {/* Filtros */}
-        <div className="bg-white rounded-lg shadow-sm p-3 sm:p-4 space-y-3 sm:space-y-4">
+        <div className="bg-white rounded-lg shadow-sm p-3 sm:p-4">
           {/* Filtro de Temporada */}
           <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4">
             <label className="font-medium text-gray-700 text-sm sm:text-base sm:min-w-[120px]">Temporada:</label>
             <select
-              value={selectedSeasonId || ''}
+              value={selectedSeasonId || currentSeason?.id || ''}
               onChange={(e) => handleSeasonChange(e.target.value)}
               className="flex-1 px-3 sm:px-4 py-2 text-sm sm:text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             >
@@ -355,96 +369,36 @@ export default function Dashboard() {
               ))}
             </select>
           </div>
-
-          {/* Filtro de Data */}
-          <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4">
-            <label className="font-medium text-gray-700 text-sm sm:text-base sm:min-w-[120px]">Período:</label>
-            {!showDateFilter ? (
-              <div className="flex-1 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-                <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2">
-                  <span className="text-sm sm:text-base text-gray-600">Toda a temporada</span>
-                  <Button
-                    onClick={handleShowDateFilter}
-                    variant="outline"
-                    className="flex items-center gap-1.5 text-xs sm:text-sm px-2 sm:px-3 py-1.5 w-full sm:w-auto justify-center"
-                  >
-                    <Filter className="w-3 sm:w-3.5 h-3 sm:h-3.5" />
-                    Filtrar por Data
-                  </Button>
-                </div>
-                <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
-                  <Button
-                    onClick={() => handleGenerateWeeklyImage(false)}
-                    disabled={generatingImage}
-                    className="flex items-center gap-1.5 text-xs sm:text-sm px-2 sm:px-3 py-1.5 justify-center"
-                    variant="outline"
-                  >
-                    <Download className="w-3 sm:w-3.5 h-3 sm:h-3.5" />
-                    {generatingImage ? 'Gerando...' : 'Baixar Imagem'}
-                  </Button>
-                  <Button
-                    onClick={() => handleGenerateWeeklyImage(true)}
-                    disabled={generatingImage}
-                    className="flex items-center gap-1.5 text-xs sm:text-sm px-2 sm:px-3 py-1.5 justify-center"
-                  >
-                    <Share2 className="w-3 sm:w-3.5 h-3 sm:h-3.5" />
-                    {generatingImage ? 'Gerando...' : 'Compartilhar'}
-                  </Button>
-                </div>
-              </div>
-            ) : (
-              <div className="flex-1 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-                <div className="flex flex-col sm:flex-row sm:items-center gap-3">
-                  <div className="flex flex-col sm:flex-row sm:items-center gap-2">
-                    <span className="text-xs sm:text-sm text-gray-600">De:</span>
-                    <input
-                      type="date"
-                      value={startDate}
-                      onChange={(e) => setStartDate(e.target.value)}
-                      className="px-3 py-1.5 text-xs sm:text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-                    />
-                  </div>
-                  <div className="flex flex-col sm:flex-row sm:items-center gap-2">
-                    <span className="text-xs sm:text-sm text-gray-600">Até:</span>
-                    <input
-                      type="date"
-                      value={endDate}
-                      onChange={(e) => setEndDate(e.target.value)}
-                      className="px-3 py-1.5 text-xs sm:text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-                    />
-                  </div>
-                  <Button
-                    onClick={handleClearDateFilter}
-                    variant="outline"
-                    className="text-red-600 hover:bg-red-50 text-xs sm:text-sm px-2 sm:px-3 py-1.5 w-full sm:w-auto"
-                  >
-                    Limpar Filtro
-                  </Button>
-                </div>
-                <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
-                  <Button
-                    onClick={() => handleGenerateWeeklyImage(false)}
-                    disabled={generatingImage}
-                    className="flex items-center gap-1.5 text-xs sm:text-sm px-2 sm:px-3 py-1.5 justify-center"
-                    variant="outline"
-                  >
-                    <Download className="w-3 sm:w-3.5 h-3 sm:h-3.5" />
-                    {generatingImage ? 'Gerando...' : 'Baixar Imagem'}
-                  </Button>
-                  <Button
-                    onClick={() => handleGenerateWeeklyImage(true)}
-                    disabled={generatingImage}
-                    className="flex items-center gap-1.5 text-xs sm:text-sm px-2 sm:px-3 py-1.5 justify-center"
-                  >
-                    <Share2 className="w-3 sm:w-3.5 h-3 sm:h-3.5" />
-                    {generatingImage ? 'Gerando...' : 'Compartilhar'}
-                  </Button>
-                </div>
-              </div>
-            )}
-          </div>
         </div>
       </div>
+
+      {/* Gerador de Imagem */}
+      {showImageGenerator && (
+        <div className="mb-4 sm:mb-6">
+          <Card title="📸 Gerar Imagem" className="bg-gradient-to-br from-purple-50 to-pink-50">
+            <div className="space-y-3">
+              <p className="text-xs sm:text-sm text-gray-600">Selecione a data para gerar a imagem semanal</p>
+              <div className="flex flex-col sm:flex-row sm:items-center gap-3">
+                <label className="font-medium text-gray-700 text-sm">Data:</label>
+                <input
+                  type="date"
+                  value={imageDate}
+                  onChange={(e) => setImageDate(e.target.value)}
+                  className="px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 flex-1"
+                />
+                <Button
+                  onClick={() => handleGenerateWeeklyImage(false)}
+                  disabled={generatingImage}
+                  className="flex items-center gap-2 text-sm px-4 py-2 justify-center"
+                >
+                  <Download className="w-4 h-4" />
+                  {generatingImage ? 'Gerando...' : 'Baixar Imagem'}
+                </Button>
+              </div>
+            </div>
+          </Card>
+        </div>
+      )}
 
       {alert && (
         <div className="mb-4 sm:mb-6">

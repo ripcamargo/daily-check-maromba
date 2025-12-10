@@ -9,6 +9,7 @@ import { Select } from '../components/Select';
 import { Loading } from '../components/Loading';
 import { Alert } from '../components/Alert';
 import { useAthletes } from '../context/AthletesContext';
+import { useAuth } from '../context/AuthContext';
 import { 
   createAthlete, 
   updateAthlete, 
@@ -19,6 +20,7 @@ import { formatExperienceLevel } from '../utils/formatters';
 
 export default function Athletes() {
   const { athletes, loading, refreshAthletes } = useAthletes();
+  const { isAdmin } = useAuth();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedAthlete, setSelectedAthlete] = useState(null);
   const [formData, setFormData] = useState({
@@ -137,10 +139,12 @@ export default function Athletes() {
           <h1 className="text-3xl font-bold text-gray-800">Atletas</h1>
           <p className="text-gray-600 mt-2">Gerencie os atletas cadastrados</p>
         </div>
-        <Button onClick={() => handleOpenModal()} className="flex items-center gap-2">
-          <Plus className="w-5 h-5" />
-          Novo Atleta
-        </Button>
+        {isAdmin && (
+          <Button onClick={() => handleOpenModal()} className="flex items-center gap-2">
+            <Plus className="w-5 h-5" />
+            Novo Atleta
+          </Button>
+        )}
       </div>
 
       {alert && (
@@ -180,23 +184,25 @@ export default function Athletes() {
                   {formatExperienceLevel(athlete.experienceLevel)}
                 </p>
 
-                <div className="flex gap-2 w-full">
-                  <Button
-                    variant="outline"
-                    onClick={() => handleOpenModal(athlete)}
-                    className="flex-1 flex items-center justify-center gap-2"
-                  >
-                    <Edit2 className="w-4 h-4" />
-                    Editar
-                  </Button>
-                  <Button
-                    variant="danger"
-                    onClick={() => handleDelete(athlete.id, athlete.name)}
-                    className="flex items-center justify-center gap-2"
-                  >
-                    <Trash2 className="w-4 h-4" />
-                  </Button>
-                </div>
+                {isAdmin && (
+                  <div className="flex gap-2 w-full">
+                    <Button
+                      variant="outline"
+                      onClick={() => handleOpenModal(athlete)}
+                      className="flex-1 flex items-center justify-center gap-2"
+                    >
+                      <Edit2 className="w-4 h-4" />
+                      Editar
+                    </Button>
+                    <Button
+                      variant="danger"
+                      onClick={() => handleDelete(athlete.id, athlete.name)}
+                      className="flex items-center justify-center gap-2"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </Button>
+                  </div>
+                )}
               </div>
             </Card>
           ))}

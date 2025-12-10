@@ -8,6 +8,7 @@ import { Alert } from '../components/Alert';
 import { Loading } from '../components/Loading';
 import { useAthletes } from '../context/AthletesContext';
 import { useSeason } from '../context/SeasonContext';
+import { useAuth } from '../context/AuthContext';
 import { 
   createSeason, 
   updateSeason, 
@@ -22,6 +23,7 @@ import { useEffect } from 'react';
 export default function Seasons() {
   const { athletes } = useAthletes();
   const { currentSeason, refreshSeason } = useSeason();
+  const { isAdmin } = useAuth();
   const [seasons, setSeasons] = useState([]);
   const [loading, setLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -287,22 +289,12 @@ export default function Seasons() {
           <h1 className="text-3xl font-bold text-gray-800">Temporadas</h1>
           <p className="text-gray-600 mt-2">Gerencie as temporadas do projeto</p>
         </div>
-        <div className="flex gap-3">
-          {currentSeason && (
-            <Button
-              variant="outline"
-              onClick={handleOpenConfigModal}
-              className="flex items-center gap-2"
-            >
-              <Settings className="w-5 h-5" />
-              Configurar Temporada Atual
-            </Button>
-          )}
+        {isAdmin && (
           <Button onClick={handleOpenModal} className="flex items-center gap-2">
             <Plus className="w-5 h-5" />
             Nova Temporada
           </Button>
-        </div>
+        )}
       </div>
 
       {alert && (
@@ -315,52 +307,7 @@ export default function Seasons() {
         </div>
       )}
 
-      {currentSeason && (
-        <Card title="Temporada Atual" className="mb-6 bg-gradient-to-r from-blue-50 to-blue-100 border-2 border-blue-300">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <div>
-              <p className="text-sm text-gray-600 mb-1">Título</p>
-              <p className="text-lg font-bold text-gray-800">{currentSeason.title}</p>
-            </div>
-            <div>
-              <p className="text-sm text-gray-600 mb-1">Período</p>
-              <p className="text-lg font-bold text-gray-800">
-                {formatDate(currentSeason.startDate)} - {formatDate(currentSeason.endDate)}
-              </p>
-            </div>
-            <div>
-              <p className="text-sm text-gray-600 mb-1">Multa por Falta</p>
-              <p className="text-lg font-bold text-gray-800">
-                {formatCurrency(currentSeason.finePerAbsence)}
-              </p>
-            </div>
-            <div>
-              <p className="text-sm text-gray-600 mb-1">Folgas Semanais</p>
-              <p className="text-lg font-bold text-gray-800">
-                {currentSeason.weeklyRestLimit} dias
-              </p>
-            </div>
-            <div>
-              <p className="text-sm text-gray-600 mb-1">Participantes</p>
-              <p className="text-lg font-bold text-gray-800">
-                {currentSeason.participants?.length || 0} atletas
-              </p>
-            </div>
-            <div>
-              <p className="text-sm text-gray-600 mb-1">Dias Neutros</p>
-              <p className="text-lg font-bold text-gray-800">
-                {currentSeason.neutralDays?.length || 0} dias
-              </p>
-            </div>
-            <div>
-              <p className="text-sm text-gray-600 mb-1">Datas Bônus ⭐</p>
-              <p className="text-lg font-bold text-gray-800">
-                {currentSeason.bonusDates?.length || 0} datas
-              </p>
-            </div>
-          </div>
-        </Card>
-      )}
+
 
       <Card title="Todas as Temporadas">
         {seasons.length === 0 ? (
@@ -407,14 +354,23 @@ export default function Seasons() {
                       </div>
                     </div>
                   </div>
-                  {season.active && (
-                    <Button
-                      variant="danger"
-                      onClick={() => handleFinalizeSeason(season.id)}
-                      className="ml-4"
-                    >
-                      Finalizar
-                    </Button>
+                  {season.active && isAdmin && (
+                    <div className="flex gap-2 ml-4">
+                      <Button
+                        variant="outline"
+                        onClick={handleOpenConfigModal}
+                        className="flex items-center gap-1 px-3"
+                        title="Configurar Temporada"
+                      >
+                        <Settings className="w-4 h-4" />
+                      </Button>
+                      <Button
+                        variant="danger"
+                        onClick={() => handleFinalizeSeason(season.id)}
+                      >
+                        Finalizar
+                      </Button>
+                    </div>
                   )}
                 </div>
               </div>

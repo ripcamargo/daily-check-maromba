@@ -48,7 +48,7 @@ export const getWeekBounds = (date, weekStartsOn = 1) => {
  * Calcula o status final de um check-in baseado em regras
  * @param {string} userStatus - Status marcado pelo usuário
  * @param {boolean} isBonusDate - Se a data é bônus
- * @param {number} absencesInWeek - Número de ausências na semana (INCLUINDO o dia atual)
+ * @param {number} absencesInWeek - Número de ausências na semana (EXCLUINDO o dia atual e datas bônus)
  * @param {number} weeklyRestLimit - Limite de folgas semanais
  */
 export const calculateFinalStatus = (userStatus, isBonusDate, absencesInWeek, weeklyRestLimit) => {
@@ -67,10 +67,16 @@ export const calculateFinalStatus = (userStatus, isBonusDate, absencesInWeek, we
     return userStatus;
   }
   
-  // Se ausente, calcula se é folga ou falta
-  // absencesInWeek já inclui a ausência de hoje
+  // Se ausente em DATA BÔNUS, sempre é REST (nunca conta como falta)
+  if (userStatus === CheckinStatus.ABSENT && isBonusDate) {
+    return CalculatedStatus.REST;
+  }
+  
+  // Se ausente em dia normal, calcula se é folga ou falta
+  // Conta a ausência de hoje ANTES de verificar o limite
   if (userStatus === CheckinStatus.ABSENT) {
-    return absencesInWeek <= weeklyRestLimit ? CalculatedStatus.REST : CalculatedStatus.ABSENCE;
+    const totalAbsences = absencesInWeek + 1; // +1 para incluir a ausência de hoje
+    return totalAbsences <= weeklyRestLimit ? CalculatedStatus.REST : CalculatedStatus.ABSENCE;
   }
   
   return CheckinStatus.NOT_SET;
@@ -82,7 +88,7 @@ export const calculateFinalStatus = (userStatus, isBonusDate, absencesInWeek, we
 export const StatusEmoji = {
   [CheckinStatus.NOT_SET]: '-',
   [CheckinStatus.PRESENT]: '✅',
-  [CheckinStatus.ABSENT]: '▢',
+  [CheckinStatus.ABSENT]: '➖',
   [CheckinStatus.HOSPITAL]: '🚑',
   [CheckinStatus.JUSTIFIED]: '📄',
   [CalculatedStatus.REST]: '🔷',
@@ -127,12 +133,20 @@ export const getWeekCheckins = async (seasonId, date, weekStartsOn = 1) => {
 };
 
 /**
- * Conta ausências de um atleta na semana
+ * Conta ausências de um atleta na semana (excluindo datas bônus)
+ * @param {Array} weekCheckins - Check-ins da semana
+ * @param {string} athleteId - ID do atleta
+ * @param {Array} bonusDates - Lista de datas bônus (formato yyyy-MM-dd)
  */
-export const countWeeklyAbsences = (weekCheckins, athleteId) => {
+export const countWeeklyAbsences = (weekCheckins, athleteId, bonusDates = []) => {
   let absenceCount = 0;
   
   weekCheckins.forEach(checkin => {
+    // Ignora datas bônus - elas não contam no limite de folgas
+    if (bonusDates.includes(checkin.date)) {
+      return;
+    }
+    
     const athleteData = checkin.athletes?.[athleteId];
     if (!athleteData) return;
     
@@ -173,14 +187,11 @@ export const processCheckins = async (season, date, rawCheckins) => {
         continue;
       }
       
-      // Conta ausências do atleta na semana (excluindo a data atual e datas futuras)
+      // Conta ausências do atleta na semana (excluindo a data atual, datas futuras E datas bônus)
       const weekCheckinsExcludingToday = weekCheckins.filter(c => c.date !== date && c.date < date);
-      let absencesInWeek = countWeeklyAbsences(weekCheckinsExcludingToday, athleteId);
+      let absencesInWeek = countWeeklyAbsences(weekCheckinsExcludingToday, athleteId, bonusDates);
       
-      // Se hoje é ausente, incrementa o contador ANTES de calcular
-      if (userStatus === CheckinStatus.ABSENT) {
-        absencesInWeek++;
-      }
+      // NÃO incrementa o contador aqui - a função calculateFinalStatus faz isso internamente
       
       // Calcula status final
       const finalStatus = calculateFinalStatus(

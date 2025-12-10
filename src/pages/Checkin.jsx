@@ -7,6 +7,7 @@ import { Loading } from '../components/Loading';
 import { Avatar } from '../components/Avatar';
 import { useSeason } from '../context/SeasonContext';
 import { useAthletes } from '../context/AthletesContext';
+import { useAuth } from '../context/AuthContext';
 import { 
   CheckinStatus, 
   StatusEmoji, 
@@ -27,6 +28,7 @@ const getLocalDateString = (date = new Date()) => {
 export default function Checkin() {
   const { currentSeason } = useSeason();
   const { athletes, getAthleteById } = useAthletes();
+  const { isAdmin } = useAuth();
   const [selectedDate, setSelectedDate] = useState(getLocalDateString());
   const [checkins, setCheckins] = useState({});
   const [loading, setLoading] = useState(false);
@@ -114,6 +116,12 @@ export default function Checkin() {
 
   const handleSave = async () => {
     if (!currentSeason) return;
+
+    if (!isAdmin) {
+      setAlert({ type: 'error', message: 'Somente o administrador pode registrar check-ins' });
+      setTimeout(() => setAlert(null), 3000);
+      return;
+    }
 
     setSaving(true);
 
@@ -322,7 +330,7 @@ export default function Checkin() {
           </div>
 
           <div className="flex justify-end gap-3">
-            {!isEditing && (
+            {!isEditing && isAdmin && (
               <Button
                 variant="secondary"
                 onClick={handleStartEditing}
@@ -333,13 +341,15 @@ export default function Checkin() {
             )}
             {isEditing && (
               <>
-                <Button
-                  variant="secondary"
-                  onClick={handleClear}
-                  disabled={saving}
-                >
-                  Limpar
-                </Button>
+                {isAdmin && (
+                  <Button
+                    variant="secondary"
+                    onClick={handleClear}
+                    disabled={saving}
+                  >
+                    Limpar
+                  </Button>
+                )}
                 <Button
                   onClick={handleSave}
                   disabled={saving}

@@ -1,25 +1,31 @@
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { 
   Home, 
   Users, 
-  Calendar, 
-  CheckSquare, 
-  DollarSign, 
-  Dumbbell 
+  Calendar,
+  Dumbbell,
+  LogIn,
+  LogOut
 } from 'lucide-react';
 import { useSeason } from '../context/SeasonContext';
+import { useAuth } from '../context/AuthContext';
 
 export const Navbar = () => {
   const location = useLocation();
+  const navigate = useNavigate();
   const { currentSeason } = useSeason();
+  const { isAdmin, signOut } = useAuth();
 
   const navItems = [
     { path: '/', label: 'Dashboard', icon: Home },
     { path: '/atletas', label: 'Atletas', icon: Users },
-    { path: '/temporadas', label: 'Temporadas', icon: Calendar },
-    { path: '/checkin', label: 'Check-in', icon: CheckSquare },
-    { path: '/pagamentos', label: 'Pagamentos', icon: DollarSign }
+    { path: '/temporadas', label: 'Temporadas', icon: Calendar }
   ];
+
+  const handleLogout = async () => {
+    await signOut();
+    navigate('/');
+  };
 
   return (
     <nav className="bg-gradient-to-r from-blue-600 to-blue-800 text-white shadow-lg">
@@ -40,7 +46,7 @@ export const Navbar = () => {
             </span>
           </Link>
 
-          <div className="flex gap-0.5 sm:gap-1">
+          <div className="flex items-center gap-0.5 sm:gap-1">
             {navItems.map((item) => {
               const Icon = item.icon;
               const isActive = location.pathname === item.path;
@@ -60,6 +66,26 @@ export const Navbar = () => {
                 </Link>
               );
             })}
+            
+            <div className="ml-auto">
+              {isAdmin ? (
+                <button
+                  onClick={handleLogout}
+                  className="flex items-center justify-center p-2 rounded-lg transition-all hover:bg-blue-700"
+                  title="Sair"
+                >
+                  <LogOut className="w-5 h-5" />
+                </button>
+              ) : (
+                <Link
+                  to="/login"
+                  className="flex items-center justify-center p-2 rounded-lg transition-all hover:bg-blue-700"
+                  title="Login Admin"
+                >
+                  <LogIn className="w-5 h-5" />
+                </Link>
+              )}
+            </div>
           </div>
         </div>
       </div>
