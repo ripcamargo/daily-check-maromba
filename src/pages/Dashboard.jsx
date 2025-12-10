@@ -340,16 +340,14 @@ export default function Dashboard() {
       <div className="mb-4 sm:mb-6">
         <div className="flex items-center justify-between mb-4">
           <h1 className="text-2xl sm:text-3xl font-bold text-gray-800">Dashboard</h1>
-          {isAdmin && (
-            <Button
-              onClick={() => setShowImageGenerator(!showImageGenerator)}
-              variant="outline"
-              className="flex items-center gap-2 text-xs sm:text-sm px-2 sm:px-3 py-1.5"
-            >
-              <Download className="w-3.5 sm:w-4 h-3.5 sm:h-4" />
-              Gerar Imagem
-            </Button>
-          )}
+          <Button
+            onClick={() => setShowImageGenerator(!showImageGenerator)}
+            variant="outline"
+            className="flex items-center gap-2 text-xs sm:text-sm px-2 sm:px-3 py-1.5"
+          >
+            <Download className="w-3.5 sm:w-4 h-3.5 sm:h-4" />
+            Gerar Imagem
+          </Button>
         </div>
 
         {/* Filtros */}
