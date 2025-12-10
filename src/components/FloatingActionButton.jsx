@@ -51,7 +51,7 @@ export const FloatingActionButton = () => {
         />
       )}
 
-      <div className="fixed z-50" style={{ position: 'fixed', zIndex: 9999, right: '8px', bottom: '8px' }}>
+      <div className="fixed z-50" style={{ position: 'fixed', zIndex: 9999, right: '12px', bottom: '12px' }}>
 
       {/* Action Buttons */}
       <div className="flex flex-col-reverse items-end gap-3 mb-3">

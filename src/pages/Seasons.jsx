@@ -288,7 +288,19 @@ export default function Seasons() {
   }
 
   return (
-    <div className="container mx-auto px-4 py-8">
+    <>
+      {/* Pop-up de notificação fixo no topo */}
+      {alert && (
+        <div className="fixed top-4 right-4 z-[10000] animate-slide-in">
+          <Alert
+            type={alert.type}
+            message={alert.message}
+            onClose={() => setAlert(null)}
+          />
+        </div>
+      )}
+
+      <div className="container mx-auto px-4 py-8">
       <div className="flex justify-between items-center mb-8">
         <div>
           <h1 className="text-3xl font-bold text-gray-800">Temporadas</h1>
@@ -301,16 +313,6 @@ export default function Seasons() {
           </Button>
         )}
       </div>
-
-      {alert && (
-        <div className="mb-6">
-          <Alert
-            type={alert.type}
-            message={alert.message}
-            onClose={() => setAlert(null)}
-          />
-        </div>
-      )}
 
 
 
@@ -727,6 +729,7 @@ export default function Seasons() {
           </div>
         </form>
       </Modal>
-    </div>
+      </div>
+    </>
   );
 }

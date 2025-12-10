@@ -3,6 +3,8 @@ import {
   Home, 
   Users, 
   Calendar,
+  CheckSquare,
+  DollarSign,
   Dumbbell,
   LogIn,
   LogOut
@@ -19,7 +21,9 @@ export const Navbar = () => {
   const navItems = [
     { path: '/', label: 'Dashboard', icon: Home },
     { path: '/atletas', label: 'Atletas', icon: Users },
-    { path: '/temporadas', label: 'Temporadas', icon: Calendar }
+    { path: '/temporadas', label: 'Temporadas', icon: Calendar },
+    { path: '/checkin', label: 'Check-in', icon: CheckSquare },
+    { path: '/pagamentos', label: 'Pagamentos', icon: DollarSign }
   ];
 
   const handleLogout = async () => {

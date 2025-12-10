@@ -3,7 +3,6 @@ import { SeasonProvider, useSeason } from './context/SeasonContext';
 import { AthletesProvider } from './context/AthletesContext';
 import { AuthProvider } from './context/AuthContext';
 import { Navbar } from './components/Navbar';
-import { FloatingActionButton } from './components/FloatingActionButton';
 import { usePageMetadata } from './hooks/usePageMetadata';
 import Dashboard from './pages/Dashboard';
 import Athletes from './pages/Athletes';
@@ -24,7 +23,6 @@ function AppContent() {
   return (
     <div className="min-h-screen bg-gray-50">
       <Navbar />
-      <FloatingActionButton />
       <Routes>
         <Route path="/" element={<Dashboard />} />
         <Route path="/atletas" element={<Athletes />} />

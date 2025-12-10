@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { DollarSign, Plus, Calendar } from 'lucide-react';
+import { DollarSign, Plus, Calendar, Trash2 } from 'lucide-react';
 import { Card } from '../components/Card';
 import { Button } from '../components/Button';
 import { Modal } from '../components/Modal';
@@ -11,7 +11,7 @@ import { Avatar } from '../components/Avatar';
 import { useSeason } from '../context/SeasonContext';
 import { useAthletes } from '../context/AthletesContext';
 import { useAuth } from '../context/AuthContext';
-import { addPayment, getAllPayments } from '../services/payments';
+import { addPayment, getAllPayments, deletePayment } from '../services/payments';
 import { formatDate, formatCurrency } from '../utils/formatters';
 
 export default function Payments() {
@@ -77,6 +77,18 @@ export default function Payments() {
       setAlert({ type: 'error', message: `Erro ao registrar pagamento: ${error.message}` });
     } finally {
       setSubmitting(false);
+    }
+  };
+
+  const handleDelete = async (paymentId) => {
+    if (!window.confirm('Deseja realmente excluir este pagamento?')) return;
+
+    try {
+      await deletePayment(currentSeason.id, paymentId);
+      setAlert({ type: 'success', message: 'Pagamento excluído com sucesso!' });
+      await loadPayments();
+    } catch (error) {
+      setAlert({ type: 'error', message: `Erro ao excluir pagamento: ${error.message}` });
     }
   };
 
@@ -201,6 +213,7 @@ export default function Payments() {
                   <th className="text-left py-3 px-4 font-semibold text-gray-700">Atleta</th>
                   <th className="text-left py-3 px-4 font-semibold text-gray-700">Data</th>
                   <th className="text-right py-3 px-4 font-semibold text-gray-700">Valor</th>
+                  {isAdmin && <th className="text-center py-3 px-4 font-semibold text-gray-700 w-16"></th>}
                 </tr>
               </thead>
               <tbody>
@@ -226,6 +239,17 @@ export default function Payments() {
                       <td className="py-3 px-4 text-right font-bold text-green-600">
                         {formatCurrency(payment.value)}
                       </td>
+                      {isAdmin && (
+                        <td className="py-3 px-4 text-center">
+                          <button
+                            onClick={() => handleDelete(payment.id)}
+                            className="text-gray-400 hover:text-red-500 transition-colors p-1 rounded hover:bg-red-50"
+                            title="Excluir pagamento"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        </td>
+                      )}
                     </tr>
                   );
                 })}
@@ -238,6 +262,7 @@ export default function Payments() {
                   <td className="py-3 px-4 text-right font-bold text-green-600 text-lg">
                     {formatCurrency(totalPaid)}
                   </td>
+                  {isAdmin && <td></td>}
                 </tr>
               </tfoot>
             </table>

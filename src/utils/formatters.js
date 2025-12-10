@@ -7,6 +7,13 @@ import { ptBR } from 'date-fns/locale';
 export const formatDate = (date, pattern = 'dd/MM/yyyy') => {
   if (!date) return '';
   try {
+    // Se a data é uma string no formato yyyy-MM-dd, parse local
+    if (typeof date === 'string' && date.match(/^\d{4}-\d{2}-\d{2}$/)) {
+      const [year, month, day] = date.split('-').map(Number);
+      const localDate = new Date(year, month - 1, day);
+      return format(localDate, pattern, { locale: ptBR });
+    }
+    // Caso contrário, usa o comportamento padrão
     return format(new Date(date), pattern, { locale: ptBR });
   } catch (error) {
     console.error('Erro ao formatar data:', error);
