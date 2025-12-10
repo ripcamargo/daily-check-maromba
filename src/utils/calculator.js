@@ -4,8 +4,12 @@ import { CheckinStatus, CalculatedStatus } from '../services/checkins';
 
 /**
  * Calcula as estatísticas de um atleta baseado em seus check-ins
+ * Aplica o benefício de vale-folga se configurado na temporada
+ * @param {Array} checkins - Lista de check-ins
+ * @param {string} athleteId - ID do atleta
+ * @param {string} bonusBenefit - Benefício configurado na temporada ('vale-folga' ou '-')
  */
-export const calculateStats = (checkins, athleteId) => {
+export const calculateStats = (checkins, athleteId, bonusBenefit = '-') => {
   const stats = {
     present: 0,
     rest: 0,
@@ -47,7 +51,15 @@ export const calculateStats = (checkins, athleteId) => {
     }
   });
 
-  console.log(`Stats para atleta ${athleteId}:`, stats);
+  // Aplicar vale-folga: cada estrela anula uma falta
+  if (bonusBenefit === 'vale-folga' && stats.extra > 0 && stats.absence > 0) {
+    const valeFolgasUsed = Math.min(stats.extra, stats.absence);
+    stats.absence -= valeFolgasUsed; // Reduz as faltas
+    stats.rest += valeFolgasUsed; // Converte faltas em folgas
+    // As estrelas não são consumidas, apenas aplicam o benefício
+  }
+
+  console.log(`Stats para atleta ${athleteId} (bonusBenefit: ${bonusBenefit}):`, stats);
   return stats;
 };
 

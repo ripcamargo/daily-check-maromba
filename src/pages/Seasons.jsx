@@ -42,7 +42,8 @@ export default function Seasons() {
     logoFile: null,
     backgroundFile: null,
     neutralDays: [],
-    bonusDates: []
+    bonusDates: [],
+    bonusBenefit: '-'
   });
 
   useEffect(() => {
@@ -72,7 +73,8 @@ export default function Seasons() {
       logoFile: null,
       backgroundFile: null,
       neutralDays: [],
-      bonusDates: []
+      bonusDates: [],
+      bonusBenefit: '-'
     });
     setIsModalOpen(true);
   };
@@ -89,7 +91,8 @@ export default function Seasons() {
         logoFile: null,
         backgroundFile: null,
         neutralDays: currentSeason.neutralDays || [],
-        bonusDates: currentSeason.bonusDates || []
+        bonusDates: currentSeason.bonusDates || [],
+        bonusBenefit: currentSeason.bonusBenefit || '-'
       });
       setIsConfigModalOpen(true);
     }
@@ -111,6 +114,7 @@ export default function Seasons() {
         participants: formData.participants,
         neutralDays: formData.neutralDays,
         bonusDates: formData.bonusDates,
+        bonusBenefit: formData.bonusBenefit,
         logoUrl: '',
         backgroundUrl: ''
       };
@@ -159,7 +163,8 @@ export default function Seasons() {
         weekStartsOn: parseInt(formData.weekStartsOn),
         participants: formData.participants,
         neutralDays: formData.neutralDays,
-        bonusDates: formData.bonusDates
+        bonusDates: formData.bonusDates,
+        bonusBenefit: formData.bonusBenefit
       };
 
       if (formData.logoFile) {
@@ -667,6 +672,26 @@ export default function Seasons() {
                 + Adicionar Data Bônus
               </button>
             </div>
+          </div>
+
+          <div className="mb-4">
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Benefício da Data Extra ⭐
+            </label>
+            <select
+              value={formData.bonusBenefit}
+              onChange={(e) => setFormData({ ...formData, bonusBenefit: e.target.value })}
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            >
+              <option value="-">- (Não definido)</option>
+              <option value="vale-folga">Vale-folga</option>
+            </select>
+            {formData.bonusBenefit === 'vale-folga' && (
+              <p className="text-sm text-blue-600 mt-2 bg-blue-50 p-3 rounded-lg border border-blue-200">
+                ℹ️ <strong>Vale-folga:</strong> Cada estrela (⭐) conquistada permite que o atleta tenha uma falta anulada, 
+                transformando-a em uma folga simples (🔷). As estrelas são utilizadas automaticamente para compensar faltas.
+              </p>
+            )}
           </div>
 
           <div className="border-t pt-6 mt-6">

@@ -174,7 +174,7 @@ export default function Dashboard() {
         const athlete = getAthleteById(athleteId);
         if (!athlete) return null;
 
-        const stats = calculateStats(checkinsData, athleteId);
+        const stats = calculateStats(checkinsData, athleteId, selectedSeason.bonusBenefit);
         const fineInfo = calculateFine(
           stats,
           selectedSeason.finePerAbsence,
