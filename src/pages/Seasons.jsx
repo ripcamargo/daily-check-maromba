@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Plus, Settings, CheckCircle, Calendar as CalendarIcon, RefreshCw } from 'lucide-react';
+import { Plus, Settings, CheckCircle, Calendar as CalendarIcon, RefreshCw, Eye, Trash2, Trophy, Award } from 'lucide-react';
 import { Card } from '../components/Card';
 import { Button } from '../components/Button';
 import { Modal } from '../components/Modal';
@@ -14,10 +14,13 @@ import {
   updateSeason, 
   uploadSeasonLogo,
   getAllSeasons,
-  finalizeSeason
+  finalizeSeason,
+  deleteSeason
 } from '../services/seasons';
 import { getAllCheckins, processCheckins, saveCheckins, CheckinStatus } from '../services/checkins';
 import { formatDate, formatCurrency } from '../utils/formatters';
+import { calculateStats } from '../utils/calculator';
+import { sortByRanking } from '../utils/ranking';
 import { useEffect } from 'react';
 
 export default function Seasons() {
@@ -28,9 +31,12 @@ export default function Seasons() {
   const [loading, setLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isConfigModalOpen, setIsConfigModalOpen] = useState(false);
+  const [isViewModalOpen, setIsViewModalOpen] = useState(false);
+  const [viewingSeason, setViewingSeason] = useState(null);
   const [alert, setAlert] = useState(null);
   const [uploading, setUploading] = useState(false);
   const [reprocessing, setReprocessing] = useState(false);
+  const [importFromSeasonId, setImportFromSeasonId] = useState('');
   const [formData, setFormData] = useState({
     title: '',
     startDate: '',
@@ -76,7 +82,97 @@ export default function Seasons() {
       bonusDates: [],
       bonusBenefit: '-'
     });
+    setImportFromSeasonId('');
     setIsModalOpen(true);
+  };
+
+  const handleImportFromSeason = (seasonId) => {
+    const season = seasons.find(s => s.id === seasonId);
+    if (season) {
+      setFormData(prev => ({
+        ...prev,
+        finePerAbsence: season.finePerAbsence.toString(),
+        weeklyRestLimit: season.weeklyRestLimit.toString(),
+        weekStartsOn: (season.weekStartsOn || 1).toString(),
+        participants: season.participants || [],
+        neutralDays: season.neutralDays || [],
+        bonusDates: [],
+        bonusBenefit: season.bonusBenefit || '-'
+      }));
+    }
+  };
+
+  const handleOpenViewModal = (season) => {
+    setViewingSeason(season);
+    setIsViewModalOpen(true);
+  };
+
+  const handleDeleteSeason = async (seasonId) => {
+    if (!window.confirm('Deseja excluir esta temporada? Esta ação não pode ser desfeita.')) return;
+
+    try {
+      await deleteSeason(seasonId);
+      setAlert({ type: 'success', message: 'Temporada excluída com sucesso!' });
+      await loadSeasons();
+      setIsViewModalOpen(false);
+    } catch (error) {
+      setAlert({ type: 'error', message: `Erro ao excluir temporada: ${error.message}` });
+    }
+  };
+
+  const handleRecalculateChampions = async (season) => {
+    if (!window.confirm('Deseja recalcular os campeões desta temporada baseado nos check-ins registrados?')) return;
+
+    try {
+      setUploading(true);
+      
+      // Buscar todos os check-ins da temporada
+      const checkinsData = await getAllCheckins(season.id);
+
+      // Calcular ranking final
+      const athletesData = (season.participants || []).map(athleteId => {
+        const athlete = athletes.find(a => a.id === athleteId);
+        if (!athlete) return null;
+
+        const stats = calculateStats(checkinsData, athleteId, season.bonusBenefit);
+
+        return {
+          id: athlete.id,
+          name: athlete.name,
+          stats
+        };
+      }).filter(Boolean);
+
+      // Ordenar por ranking
+      const rankedAthletes = sortByRanking(athletesData);
+
+      // Salvar campeões (1º e 2º lugares)
+      const champions = {
+        first: rankedAthletes[0] ? { 
+          athleteId: rankedAthletes[0].id, 
+          athleteName: rankedAthletes[0].name 
+        } : null,
+        second: rankedAthletes[1] ? { 
+          athleteId: rankedAthletes[1].id, 
+          athleteName: rankedAthletes[1].name 
+        } : null
+      };
+
+      // Atualizar temporada com os campeões
+      await updateSeason(season.id, { champions });
+      
+      setAlert({ type: 'success', message: 'Campeões recalculados com sucesso!' });
+      await loadSeasons();
+      
+      // Atualizar o viewingSeason com os novos dados
+      const updatedSeasons = await getAllSeasons();
+      const updatedSeason = updatedSeasons.find(s => s.id === season.id);
+      setViewingSeason(updatedSeason);
+    } catch (error) {
+      setAlert({ type: 'error', message: `Erro ao recalcular campeões: ${error.message}` });
+    } finally {
+      setUploading(false);
+    }
   };
   const handleOpenConfigModal = () => {
     if (currentSeason) {
@@ -193,7 +289,46 @@ export default function Seasons() {
     if (!window.confirm('Deseja finalizar esta temporada? Ela ficará inativa.')) return;
 
     try {
-      await finalizeSeason(seasonId);
+      // Buscar a temporada sendo finalizada
+      const season = seasons.find(s => s.id === seasonId);
+      if (!season) {
+        throw new Error('Temporada não encontrada');
+      }
+
+      // Buscar todos os check-ins da temporada
+      const checkinsData = await getAllCheckins(seasonId);
+
+      // Calcular ranking final
+      const athletesData = (season.participants || []).map(athleteId => {
+        const athlete = athletes.find(a => a.id === athleteId);
+        if (!athlete) return null;
+
+        const stats = calculateStats(checkinsData, athleteId, season.bonusBenefit);
+
+        return {
+          id: athlete.id,
+          name: athlete.name,
+          stats
+        };
+      }).filter(Boolean);
+
+      // Ordenar por ranking
+      const rankedAthletes = sortByRanking(athletesData);
+
+      // Salvar campeões (1º e 2º lugares)
+      const champions = {
+        first: rankedAthletes[0] ? { 
+          athleteId: rankedAthletes[0].id, 
+          athleteName: rankedAthletes[0].name 
+        } : null,
+        second: rankedAthletes[1] ? { 
+          athleteId: rankedAthletes[1].id, 
+          athleteName: rankedAthletes[1].name 
+        } : null
+      };
+
+      // Finalizar temporada com os campeões
+      await finalizeSeason(seasonId, champions);
       setAlert({ type: 'success', message: 'Temporada finalizada com sucesso!' });
       await loadSeasons();
       await refreshSeason();
@@ -379,6 +514,19 @@ export default function Seasons() {
                       </Button>
                     </div>
                   )}
+                  {!season.active && isAdmin && (
+                    <div className="flex gap-2 ml-4">
+                      <Button
+                        variant="outline"
+                        onClick={() => handleOpenViewModal(season)}
+                        className="flex items-center gap-1 px-3"
+                        title="Visualizar Temporada"
+                      >
+                        <Eye className="w-4 h-4" />
+                        Visualizar
+                      </Button>
+                    </div>
+                  )}
                 </div>
               </div>
             ))}
@@ -394,6 +542,32 @@ export default function Seasons() {
         size="lg"
       >
         <form onSubmit={handleSubmit}>
+          <div className="mb-4">
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Importar Configurações de Temporada Anterior
+            </label>
+            <select
+              value={importFromSeasonId}
+              onChange={(e) => {
+                setImportFromSeasonId(e.target.value);
+                if (e.target.value) {
+                  handleImportFromSeason(e.target.value);
+                }
+              }}
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            >
+              <option value="">Começar do zero</option>
+              {seasons.filter(s => !s.active).map((season) => (
+                <option key={season.id} value={season.id}>
+                  {season.title} ({formatDate(season.startDate)} - {formatDate(season.endDate)})
+                </option>
+              ))}
+            </select>
+            <p className="text-sm text-gray-500 mt-1">
+              Importa participantes e configurações (multa, folgas, etc.) de uma temporada finalizada
+            </p>
+          </div>
+
           <Input
             label="Título da Temporada"
             value={formData.title}
@@ -728,6 +902,184 @@ export default function Seasons() {
             </Button>
           </div>
         </form>
+      </Modal>
+
+      {/* Modal Visualização de Temporada Antiga */}
+      <Modal
+        isOpen={isViewModalOpen}
+        onClose={() => setIsViewModalOpen(false)}
+        title={`Visualizar Temporada: ${viewingSeason?.title || ''}`}
+        size="lg"
+      >
+        {viewingSeason && (
+          <div className="space-y-6">
+            <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
+              <p className="text-sm text-gray-600 mb-2">
+                ⚠️ Esta é uma temporada finalizada. Não é possível editar as configurações, apenas visualizar ou excluir.
+              </p>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Título da Temporada</label>
+              <div className="px-4 py-2 bg-gray-100 border border-gray-300 rounded-lg text-gray-700">
+                {viewingSeason.title}
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Data de Início</label>
+                <div className="px-4 py-2 bg-gray-100 border border-gray-300 rounded-lg text-gray-700">
+                  {formatDate(viewingSeason.startDate)}
+                </div>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Data de Término</label>
+                <div className="px-4 py-2 bg-gray-100 border border-gray-300 rounded-lg text-gray-700">
+                  {formatDate(viewingSeason.endDate)}
+                </div>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Multa por Falta</label>
+                <div className="px-4 py-2 bg-gray-100 border border-gray-300 rounded-lg text-gray-700">
+                  {formatCurrency(viewingSeason.finePerAbsence)}
+                </div>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Folgas Semanais Permitidas</label>
+                <div className="px-4 py-2 bg-gray-100 border border-gray-300 rounded-lg text-gray-700">
+                  {viewingSeason.weeklyRestLimit}
+                </div>
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Dia de Início da Semana</label>
+              <div className="px-4 py-2 bg-gray-100 border border-gray-300 rounded-lg text-gray-700">
+                {['Domingo', 'Segunda-feira', 'Terça-feira', 'Quarta-feira', 'Quinta-feira', 'Sexta-feira', 'Sábado'][viewingSeason.weekStartsOn || 1]}
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Participantes</label>
+              <div className="max-h-60 overflow-y-auto border rounded-lg p-4 bg-gray-50">
+                {viewingSeason.participants?.length > 0 ? (
+                  <div className="space-y-2">
+                    {viewingSeason.participants.map((participantId) => {
+                      const athlete = athletes.find(a => a.id === participantId);
+                      return athlete ? (
+                        <div key={participantId} className="flex items-center gap-2 p-2 bg-white rounded border">
+                          <CheckCircle className="w-4 h-4 text-green-500" />
+                          <span className="font-medium">{athlete.name}</span>
+                          <span className="text-sm text-gray-500">({athlete.experienceLevel})</span>
+                        </div>
+                      ) : null;
+                    })}
+                  </div>
+                ) : (
+                  <p className="text-gray-500">Nenhum participante cadastrado</p>
+                )}
+              </div>
+            </div>
+
+            {viewingSeason.bonusDates && viewingSeason.bonusDates.length > 0 && (
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Datas Bônus ⭐</label>
+                <div className="space-y-2">
+                  {viewingSeason.bonusDates.map((date, index) => (
+                    <div key={index} className="px-4 py-2 bg-yellow-50 border border-yellow-300 rounded-lg text-gray-700">
+                      {formatDate(new Date(date))}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {viewingSeason.bonusBenefit && viewingSeason.bonusBenefit !== '-' && (
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Benefício da Data Extra</label>
+                <div className="px-4 py-2 bg-gray-100 border border-gray-300 rounded-lg text-gray-700">
+                  {viewingSeason.bonusBenefit === 'vale-folga' ? 'Vale-folga' : viewingSeason.bonusBenefit}
+                </div>
+              </div>
+            )}
+
+            {/* Seção de Campeões */}
+            <div className="border-t pt-6 mt-6">
+              <label className="block text-sm font-medium text-gray-700 mb-3">🏆 Campeões da Temporada</label>
+              
+              {viewingSeason.champions ? (
+                <div className="space-y-3">
+                  {viewingSeason.champions.first && (
+                    <div className="flex items-center gap-3 p-4 bg-gradient-to-r from-yellow-400 to-yellow-500 text-yellow-900 rounded-lg shadow-md">
+                      <Trophy className="w-6 h-6" />
+                      <div>
+                        <div className="font-bold text-sm">1º Lugar - Campeão</div>
+                        <div className="text-lg font-bold">{viewingSeason.champions.first.athleteName}</div>
+                      </div>
+                    </div>
+                  )}
+                  
+                  {viewingSeason.champions.second && (
+                    <div className="flex items-center gap-3 p-4 bg-gradient-to-r from-gray-300 to-gray-400 text-gray-800 rounded-lg shadow-md">
+                      <Award className="w-6 h-6" />
+                      <div>
+                        <div className="font-bold text-sm">2º Lugar - Vice-campeão</div>
+                        <div className="text-lg font-bold">{viewingSeason.champions.second.athleteName}</div>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                  <p className="text-sm text-blue-700 mb-3">
+                    Esta temporada não tem campeões registrados. Clique no botão abaixo para calcular automaticamente 
+                    baseado nos check-ins registrados.
+                  </p>
+                  <Button
+                    type="button"
+                    onClick={() => handleRecalculateChampions(viewingSeason)}
+                    disabled={uploading}
+                    className="flex items-center gap-2"
+                  >
+                    <Trophy className="w-4 h-4" />
+                    {uploading ? 'Calculando...' : 'Calcular Campeões'}
+                  </Button>
+                </div>
+              )}
+            </div>
+
+            <div className="border-t pt-6 mt-6">
+              <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+                <h4 className="font-semibold text-red-800 mb-2 flex items-center gap-2">
+                  <Trash2 className="w-5 h-5" />
+                  Zona de Perigo
+                </h4>
+                <p className="text-sm text-red-700 mb-3">
+                  Excluir esta temporada removerá permanentemente todos os dados associados a ela. Esta ação não pode ser desfeita.
+                </p>
+                <Button
+                  type="button"
+                  variant="danger"
+                  onClick={() => handleDeleteSeason(viewingSeason.id)}
+                  className="flex items-center gap-2"
+                >
+                  <Trash2 className="w-4 h-4" />
+                  Excluir Temporada
+                </Button>
+              </div>
+            </div>
+
+            <div className="flex gap-3 justify-end mt-6">
+              <Button type="button" variant="secondary" onClick={() => setIsViewModalOpen(false)}>
+                Fechar
+              </Button>
+            </div>
+          </div>
+        )}
       </Modal>
       </div>
     </>

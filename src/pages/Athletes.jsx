@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { Plus, Edit2, Trash2 } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { Plus, Edit2, Trash2, Trophy, Award } from 'lucide-react';
 import { Card } from '../components/Card';
 import { Button } from '../components/Button';
 import { Avatar } from '../components/Avatar';
@@ -16,6 +16,7 @@ import {
   deleteAthlete, 
   uploadAthletePhoto 
 } from '../services/athletes';
+import { getAthleteTitles } from '../services/seasons';
 import { formatExperienceLevel } from '../utils/formatters';
 
 export default function Athletes() {
@@ -23,6 +24,7 @@ export default function Athletes() {
   const { isAdmin } = useAuth();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedAthlete, setSelectedAthlete] = useState(null);
+  const [athleteTitles, setAthleteTitles] = useState({});
   const [formData, setFormData] = useState({
     name: '',
     experienceLevel: '',
@@ -30,6 +32,21 @@ export default function Athletes() {
   });
   const [uploading, setUploading] = useState(false);
   const [alert, setAlert] = useState(null);
+
+  useEffect(() => {
+    loadAllTitles();
+  }, [athletes]);
+
+  const loadAllTitles = async () => {
+    const titlesMap = {};
+    for (const athlete of athletes) {
+      const titles = await getAthleteTitles(athlete.id);
+      if (titles.length > 0) {
+        titlesMap[athlete.id] = titles;
+      }
+    }
+    setAthleteTitles(titlesMap);
+  };
 
   const experienceLevels = [
     { value: 'Iniciante', label: 'Iniciante' },
@@ -101,6 +118,7 @@ export default function Athletes() {
       }
 
       await refreshAthletes();
+      await loadAllTitles();
       handleCloseModal();
     } catch (error) {
       setAlert({ type: 'error', message: `Erro ao salvar atleta: ${error.message}` });
@@ -116,6 +134,7 @@ export default function Athletes() {
       await deleteAthlete(athleteId);
       setAlert({ type: 'success', message: 'Atleta excluído com sucesso!' });
       await refreshAthletes();
+      await loadAllTitles();
     } catch (error) {
       setAlert({ type: 'error', message: `Erro ao excluir atleta: ${error.message}` });
     }
@@ -169,7 +188,7 @@ export default function Athletes() {
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {athletes.map((athlete) => (
-            <Card key={athlete.id}>
+            <Card key={athlete.id} className="relative">
               <div className="flex flex-col items-center">
                 <Avatar
                   name={athlete.name}
@@ -184,24 +203,42 @@ export default function Athletes() {
                   {formatExperienceLevel(athlete.experienceLevel)}
                 </p>
 
-                {isAdmin && (
-                  <div className="flex gap-2 w-full">
-                    <Button
-                      variant="outline"
-                      onClick={() => handleOpenModal(athlete)}
-                      className="flex-1 flex items-center justify-center gap-2"
-                    >
-                      <Edit2 className="w-4 h-4" />
-                      Editar
-                    </Button>
-                    <Button
-                      variant="danger"
-                      onClick={() => handleDelete(athlete.id, athlete.name)}
-                      className="flex items-center justify-center gap-2"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </Button>
+                {/* Títulos do Atleta */}
+                {athleteTitles[athlete.id] && athleteTitles[athlete.id].length > 0 && (
+                  <div className="w-full mb-4 space-y-2">
+                    {athleteTitles[athlete.id].map((title, index) => (
+                      <div
+                        key={index}
+                        className={`flex items-center justify-center gap-2 px-3 py-2 rounded-lg text-sm font-semibold ${
+                          title.type === 'champion'
+                            ? 'bg-gradient-to-r from-yellow-400 to-yellow-500 text-yellow-900 shadow-md'
+                            : 'bg-gradient-to-r from-gray-300 to-gray-400 text-gray-800 shadow-md'
+                        }`}
+                      >
+                        {title.type === 'champion' ? (
+                          <>
+                            <Trophy className="w-4 h-4" />
+                            <span>Campeão {title.seasonTitle}</span>
+                          </>
+                        ) : (
+                          <>
+                            <Award className="w-4 h-4" />
+                            <span>Vice-campeão {title.seasonTitle}</span>
+                          </>
+                        )}
+                      </div>
+                    ))}
                   </div>
+                )}
+
+                {isAdmin && (
+                  <button
+                    onClick={() => handleOpenModal(athlete)}
+                    className="absolute top-2 right-2 p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                    title="Editar atleta"
+                  >
+                    <Edit2 className="w-4 h-4" />
+                  </button>
                 )}
               </div>
             </Card>
@@ -248,6 +285,32 @@ export default function Athletes() {
               </p>
             )}
           </div>
+
+          {selectedAthlete && (
+            <div className="border-t pt-6 mt-6">
+              <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+                <h4 className="font-semibold text-red-800 mb-2 flex items-center gap-2">
+                  <Trash2 className="w-5 h-5" />
+                  Zona de Perigo
+                </h4>
+                <p className="text-sm text-red-700 mb-3">
+                  Excluir este atleta removerá permanentemente todos os dados associados a ele. Esta ação não pode ser desfeita.
+                </p>
+                <Button
+                  type="button"
+                  variant="danger"
+                  onClick={() => {
+                    handleDelete(selectedAthlete.id, selectedAthlete.name);
+                    handleCloseModal();
+                  }}
+                  className="flex items-center gap-2"
+                >
+                  <Trash2 className="w-4 h-4" />
+                  Excluir Atleta
+                </Button>
+              </div>
+            </div>
+          )}
 
           <div className="flex gap-3 justify-end mt-6">
             <Button type="button" variant="secondary" onClick={handleCloseModal}>

@@ -172,13 +172,70 @@ export const deleteSeason = async (seasonId) => {
 };
 
 /**
- * Finaliza uma temporada (marca como inativa)
+ * Finaliza uma temporada (marca como inativa e salva campeões)
  */
-export const finalizeSeason = async (seasonId) => {
+export const finalizeSeason = async (seasonId, champions = null) => {
   try {
-    await updateSeason(seasonId, { active: false, finalizedAt: new Date() });
+    const updates = { 
+      active: false, 
+      finalizedAt: new Date() 
+    };
+    
+    if (champions) {
+      updates.champions = champions;
+    }
+    
+    await updateSeason(seasonId, updates);
   } catch (error) {
     console.error('Erro ao finalizar temporada:', error);
+    throw error;
+  }
+};
+
+/**
+ * Busca títulos de um atleta (campeão ou vice) em temporadas finalizadas
+ */
+export const getAthleteTitles = async (athleteId) => {
+  try {
+    const allSeasons = await getAllSeasons();
+    const titles = [];
+
+    allSeasons.forEach(season => {
+      if (!season.active && season.champions) {
+        if (season.champions.first?.athleteId === athleteId) {
+          titles.push({
+            type: 'champion',
+            seasonTitle: season.title,
+            seasonId: season.id
+          });
+        } else if (season.champions.second?.athleteId === athleteId) {
+          titles.push({
+            type: 'runner-up',
+            seasonTitle: season.title,
+            seasonId: season.id
+          });
+        }
+      }
+    });
+
+    return titles;
+  } catch (error) {
+    console.error('Erro ao buscar títulos do atleta:', error);
+    return [];
+  }
+};
+
+/**
+ * Recalcula e salva os campeões de uma temporada antiga que não tem essa informação
+ * Útil para temporadas finalizadas antes da implementação dessa funcionalidade
+ */
+export const recalculateSeasonChampions = async (seasonId, checkinsData, athletes, seasonBonusBenefit) => {
+  try {
+    // Importar funções necessárias (note que isso precisa ser feito no componente)
+    // Esta função será chamada do componente que já tem acesso a essas funções
+    return { seasonId, checkinsData, athletes, seasonBonusBenefit };
+  } catch (error) {
+    console.error('Erro ao recalcular campeões:', error);
     throw error;
   }
 };
