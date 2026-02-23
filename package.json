@@ -10,6 +10,7 @@
     "lint": "eslint src --ext js,jsx"
   },
   "dependencies": {
+    "colorthief": "^2.6.0",
     "date-fns": "^2.30.0",
     "dotenv": "^17.2.3",
     "firebase": "^10.7.1",
