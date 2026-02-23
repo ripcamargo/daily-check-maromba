@@ -6,6 +6,7 @@ import { Loading } from '../components/Loading';
 import { Alert } from '../components/Alert';
 import { Button } from '../components/Button';
 import { useSeason } from '../context/SeasonContext';
+import { useThemeColor } from '../context/ThemeColorContext';
 import { useAthletes } from '../context/AthletesContext';
 import { useAuth } from '../context/AuthContext';
 import { getAllCheckins } from '../services/checkins';
@@ -27,6 +28,7 @@ import * as XLSX from 'xlsx';
 
 export default function Dashboard() {
   const { currentSeason } = useSeason();
+  const { primary } = useThemeColor();
   const { athletes, getAthleteById } = useAthletes();
   const { isAdmin } = useAuth();
   const [loading, setLoading] = useState(true);
@@ -358,7 +360,15 @@ export default function Dashboard() {
             <select
               value={selectedSeasonId || currentSeason?.id || ''}
               onChange={(e) => handleSeasonChange(e.target.value)}
-              className="flex-1 px-3 sm:px-4 py-2 text-sm sm:text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="flex-1 px-3 sm:px-4 py-2 text-sm sm:text-base border border-gray-300 rounded-lg focus:border-transparent"
+              style={{ focusRing: `2px ${primary}` }}
+              onFocus={(e) => {
+                e.target.style.outline = 'none';
+                e.target.style.boxShadow = `0 0 0 3px ${primary}40`;
+              }}
+              onBlur={(e) => {
+                e.target.style.boxShadow = 'none';
+              }}
             >
               {allSeasons.map(season => (
                 <option key={season.id} value={season.id}>
@@ -473,9 +483,10 @@ export default function Dashboard() {
           onClick={() => setActiveTab('ranking')}
           className={`flex-shrink-0 px-3 sm:px-6 py-2 sm:py-3 rounded-lg text-sm sm:text-base font-medium transition-all ${
             activeTab === 'ranking'
-              ? 'bg-blue-600 text-white shadow-lg'
+              ? 'text-white shadow-lg'
               : 'bg-white text-gray-700 hover:bg-gray-50'
           }`}
+          style={activeTab === 'ranking' ? { backgroundColor: primary } : {}}
         >
           🏆 Ranking
         </button>
@@ -483,9 +494,10 @@ export default function Dashboard() {
           onClick={() => setActiveTab('financial')}
           className={`flex-shrink-0 px-3 sm:px-6 py-2 sm:py-3 rounded-lg text-sm sm:text-base font-medium transition-all ${
             activeTab === 'financial'
-              ? 'bg-blue-600 text-white shadow-lg'
+              ? 'text-white shadow-lg'
               : 'bg-white text-gray-700 hover:bg-gray-50'
           }`}
+          style={activeTab === 'financial' ? { backgroundColor: primary } : {}}
         >
           💰 Financeiro
         </button>
@@ -493,9 +505,10 @@ export default function Dashboard() {
           onClick={() => setActiveTab('attendance')}
           className={`flex-shrink-0 px-3 sm:px-6 py-2 sm:py-3 rounded-lg text-sm sm:text-base font-medium transition-all ${
             activeTab === 'attendance'
-              ? 'bg-blue-600 text-white shadow-lg'
+              ? 'text-white shadow-lg'
               : 'bg-white text-gray-700 hover:bg-gray-50'
           }`}
+          style={activeTab === 'attendance' ? { backgroundColor: primary } : {}}
         >
           📋 Log de Presença
         </button>
@@ -545,7 +558,7 @@ export default function Dashboard() {
                         <td className="py-2 px-1 sm:py-4 sm:px-2 text-center font-bold text-red-600 text-xs sm:text-base">
                           {athlete.stats.absence}
                         </td>
-                        <td className="py-2 px-1 sm:py-4 sm:px-2 text-center font-bold text-blue-600 text-xs sm:text-base">
+                        <td className="py-2 px-1 sm:py-4 sm:px-2 text-center font-bold text-xs sm:text-base" style={{ color: primary }}>
                           {athlete.stats.rest}
                         </td>
                         <td className="py-2 px-1 sm:py-4 sm:px-2 text-center font-bold text-indigo-600 text-xs sm:text-base">
@@ -574,7 +587,7 @@ export default function Dashboard() {
                     <span className="font-bold text-gray-600 w-6">{index + 1}º</span>
                     <Avatar name={athlete.name} photoUrl={athlete.photoUrl} size="sm" />
                     <span className="flex-1 font-medium text-gray-800">{athlete.name}</span>
-                    <span className="font-bold text-blue-600">{athlete.stats.rest}</span>
+                    <span className="font-bold" style={{ color: primary }}>{athlete.stats.rest}</span>
                   </div>
                 ))}
               </div>
@@ -686,9 +699,9 @@ export default function Dashboard() {
           </Card>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-6">
-            <Card className="bg-gradient-to-br from-blue-50 to-blue-100">
+            <Card>
               <h3 className="font-bold text-gray-700 mb-2">💵 Valor Total Previsto</h3>
-              <p className="text-3xl font-bold text-blue-600">{formatCurrency(totalExpected)}</p>
+              <p className="text-3xl font-bold" style={{ color: primary }}>{formatCurrency(totalExpected)}</p>
               <p className="text-sm text-gray-600 mt-2">Se todos pagarem suas multas</p>
             </Card>
 

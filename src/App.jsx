@@ -1,5 +1,6 @@
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { SeasonProvider, useSeason } from './context/SeasonContext';
+import { ThemeColorProvider } from './context/ThemeColorContext';
 import { AthletesProvider } from './context/AthletesContext';
 import { AuthProvider } from './context/AuthContext';
 import { Navbar } from './components/Navbar';
@@ -46,11 +47,13 @@ function App() {
   return (
     <Router>
       <AuthProvider>
-        <AthletesProvider>
-          <SeasonProvider>
-            <AppContent />
-          </SeasonProvider>
-        </AthletesProvider>
+        <SeasonProvider>
+          <ThemeColorProvider>
+            <AthletesProvider>
+              <AppContent />
+            </AthletesProvider>
+          </ThemeColorProvider>
+        </SeasonProvider>
       </AuthProvider>
     </Router>
   );

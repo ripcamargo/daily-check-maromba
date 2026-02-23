@@ -9,6 +9,7 @@ import { Select } from '../components/Select';
 import { Loading } from '../components/Loading';
 import { Alert } from '../components/Alert';
 import { useAthletes } from '../context/AthletesContext';
+import { useThemeColor } from '../context/ThemeColorContext';
 import { useAuth } from '../context/AuthContext';
 import { 
   createAthlete, 
@@ -21,6 +22,7 @@ import { formatExperienceLevel } from '../utils/formatters';
 
 export default function Athletes() {
   const { athletes, loading, refreshAthletes } = useAthletes();
+  const { primary } = useThemeColor();
   const { isAdmin } = useAuth();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedAthlete, setSelectedAthlete] = useState(null);
@@ -247,7 +249,8 @@ export default function Athletes() {
                 {isAdmin && (
                   <button
                     onClick={() => handleOpenModal(athlete)}
-                    className="absolute top-2 right-2 p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                    className="absolute top-2 right-2 p-2 hover:bg-opacity-10 rounded-lg transition-colors"
+                    style={{ color: primary }}
                     title="Editar atleta"
                   >
                     <Edit2 className="w-4 h-4" />
@@ -290,7 +293,14 @@ export default function Athletes() {
               type="file"
               accept="image/*"
               onChange={handleFileChange}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg"
+              onFocus={(e) => {
+                e.target.style.outline = 'none';
+                e.target.style.boxShadow = `0 0 0 3px ${primary}40`;
+              }}
+              onBlur={(e) => {
+                e.target.style.boxShadow = 'none';
+              }}
             />
             {selectedAthlete?.photoUrl && !formData.photoFile && (
               <p className="text-sm text-gray-500 mt-2">

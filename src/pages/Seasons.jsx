@@ -8,6 +8,7 @@ import { Alert } from '../components/Alert';
 import { Loading } from '../components/Loading';
 import { useAthletes } from '../context/AthletesContext';
 import { useSeason } from '../context/SeasonContext';
+import { useThemeColor } from '../context/ThemeColorContext';
 import { useAuth } from '../context/AuthContext';
 import { 
   createSeason, 
@@ -26,6 +27,7 @@ import { useEffect } from 'react';
 export default function Seasons() {
   const { athletes } = useAthletes();
   const { currentSeason, refreshSeason } = useSeason();
+  const { primary } = useThemeColor();
   const { isAdmin } = useAuth();
   const [seasons, setSeasons] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -554,7 +556,14 @@ export default function Seasons() {
                   handleImportFromSeason(e.target.value);
                 }
               }}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:border-transparent"
+              onFocus={(e) => {
+                e.target.style.outline = 'none';
+                e.target.style.boxShadow = `0 0 0 3px ${primary}40`;
+              }}
+              onBlur={(e) => {
+                e.target.style.boxShadow = 'none';
+              }}
             >
               <option value="">Começar do zero</option>
               {seasons.filter(s => !s.active).map((season) => (
@@ -669,7 +678,8 @@ export default function Seasons() {
                     type="checkbox"
                     checked={formData.participants.includes(athlete.id)}
                     onChange={() => handleParticipantToggle(athlete.id)}
-                    className="w-5 h-5 text-blue-600"
+                    className="w-5 h-5"
+                    style={{ accentColor: primary }}
                   />
                   <span className="font-medium">{athlete.name}</span>
                   <span className="text-sm text-gray-500">({athlete.experienceLevel})</span>
@@ -803,7 +813,8 @@ export default function Seasons() {
                     type="checkbox"
                     checked={formData.participants.includes(athlete.id)}
                     onChange={() => handleParticipantToggle(athlete.id)}
-                    className="w-5 h-5 text-blue-600"
+                    className="w-5 h-5"
+                    style={{ accentColor: primary }}
                   />
                   <span className="font-medium">{athlete.name}</span>
                 </label>
@@ -843,7 +854,16 @@ export default function Seasons() {
               <button
                 type="button"
                 onClick={() => setFormData({ ...formData, bonusDates: [...formData.bonusDates, ''] })}
-                className="w-full px-4 py-2 border-2 border-dashed border-gray-300 rounded-lg text-gray-600 hover:border-blue-400 hover:text-blue-600"
+                className="w-full px-4 py-2 border-2 border-dashed border-gray-300 rounded-lg text-gray-600 transition-colors"
+                style={{ cursor: 'pointer' }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.borderColor = primary;
+                  e.currentTarget.style.color = primary;
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.borderColor = '#d1d5db';
+                  e.currentTarget.style.color = '#4b5563';
+                }}
               >
                 + Adicionar Data Bônus
               </button>
@@ -857,13 +877,20 @@ export default function Seasons() {
             <select
               value={formData.bonusBenefit}
               onChange={(e) => setFormData({ ...formData, bonusBenefit: e.target.value })}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:border-transparent"
+              onFocus={(e) => {
+                e.target.style.outline = 'none';
+                e.target.style.boxShadow = `0 0 0 3px ${primary}40`;
+              }}
+              onBlur={(e) => {
+                e.target.style.boxShadow = 'none';
+              }}
             >
               <option value="-">- (Não definido)</option>
               <option value="vale-folga">Vale-folga</option>
             </select>
             {formData.bonusBenefit === 'vale-folga' && (
-              <p className="text-sm text-blue-600 mt-2 bg-blue-50 p-3 rounded-lg border border-blue-200">
+              <p className="text-sm mt-2 p-3 rounded-lg" style={{ color: primary, backgroundColor: `${primary}15`, borderWidth: '1px', borderColor: primary }}>
                 ℹ️ <strong>Vale-folga:</strong> Cada estrela (⭐) conquistada permite que o atleta tenha uma falta anulada, 
                 transformando-a em uma folga simples (🔷). As estrelas são utilizadas automaticamente para compensar faltas.
               </p>

@@ -6,6 +6,7 @@ import { Alert } from '../components/Alert';
 import { Loading } from '../components/Loading';
 import { Avatar } from '../components/Avatar';
 import { useSeason } from '../context/SeasonContext';
+import { useThemeColor } from '../context/ThemeColorContext';
 import { useAthletes } from '../context/AthletesContext';
 import { useAuth } from '../context/AuthContext';
 import { 
@@ -27,6 +28,7 @@ const getLocalDateString = (date = new Date()) => {
 
 export default function Checkin() {
   const { currentSeason } = useSeason();
+  const { primary } = useThemeColor();
   const { athletes, getAthleteById } = useAthletes();
   const { isAdmin } = useAuth();
   const [selectedDate, setSelectedDate] = useState(getLocalDateString());
@@ -248,7 +250,14 @@ export default function Checkin() {
               onChange={(e) => setSelectedDate(e.target.value)}
               min={formatDate(currentSeason.startDate, 'yyyy-MM-dd')}
               max={formatDate(currentSeason.endDate, 'yyyy-MM-dd')}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:border-transparent"
+              onFocus={(e) => {
+                e.target.style.outline = 'none';
+                e.target.style.boxShadow = `0 0 0 3px ${primary}40`;
+              }}
+              onBlur={(e) => {
+                e.target.style.boxShadow = 'none';
+              }}
             />
           </div>
         </div>

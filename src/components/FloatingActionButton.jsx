@@ -2,12 +2,14 @@ import { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { Plus, X, CheckSquare, DollarSign } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
+import { useThemeColor } from '../context/ThemeColorContext';
 
 export const FloatingActionButton = () => {
   const [isOpen, setIsOpen] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
   const { isAdmin } = useAuth();
+  const { primary } = useThemeColor();
 
   console.log('FAB - isAdmin:', isAdmin, 'location:', location.pathname);
 
@@ -91,12 +93,14 @@ export const FloatingActionButton = () => {
           transform transition-all duration-300 ease-out
           hover:scale-110 active:scale-95
           ${isOpen 
-            ? 'bg-red-500 hover:bg-red-600 rotate-45 shadow-red-500/50' 
-            : 'bg-blue-600 hover:bg-blue-700 rotate-0 shadow-blue-600/50'
+            ? 'bg-red-500 hover:bg-red-600 rotate-45' 
+            : 'rotate-0'
           }
           ${!isOpen ? 'animate-pulse' : ''}
         `}
         style={{
+          backgroundColor: isOpen ? '#ef4444' : primary,
+          boxShadow: isOpen ? '0 20px 25px -5px rgba(239, 68, 68, 0.5)' : `0 20px 25px -5px ${primary}40`,
           animation: !isOpen ? 'pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite' : 'none'
         }}
       >

@@ -9,6 +9,7 @@ import { Alert } from '../components/Alert';
 import { Loading } from '../components/Loading';
 import { Avatar } from '../components/Avatar';
 import { useSeason } from '../context/SeasonContext';
+import { useThemeColor } from '../context/ThemeColorContext';
 import { useAthletes } from '../context/AthletesContext';
 import { useAuth } from '../context/AuthContext';
 import { addPayment, getAllPayments, deletePayment } from '../services/payments';
@@ -16,6 +17,7 @@ import { formatDate, formatCurrency } from '../utils/formatters';
 
 export default function Payments() {
   const { currentSeason } = useSeason();
+  const { primary } = useThemeColor();
   const { athletes, getAthleteById } = useAthletes();
   const { isAdmin } = useAuth();
   const [payments, setPayments] = useState([]);
@@ -166,9 +168,9 @@ export default function Payments() {
           </div>
         </Card>
 
-        <Card className="bg-gradient-to-br from-blue-50 to-blue-100">
+        <Card>
           <div className="flex items-center gap-4">
-            <div className="p-3 bg-blue-500 rounded-lg">
+            <div className="p-3 rounded-lg" style={{ backgroundColor: primary }}>
               <Calendar className="w-8 h-8 text-white" />
             </div>
             <div>
