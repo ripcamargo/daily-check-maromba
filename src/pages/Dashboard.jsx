@@ -20,7 +20,7 @@ import {
   sortByMostHospital 
 } from '../utils/ranking';
 import { formatCurrency, formatPercentage } from '../utils/formatters';
-import { generateWeeklyImage, downloadWeeklyImage, shareWeeklyImage } from '../utils/imageGenerator';
+import { generateWeeklyImage, downloadWeeklyImage, shareWeeklyImage, generateRankingImage } from '../utils/imageGenerator';
 import { StatusEmoji, CheckinStatus, CalculatedStatus } from '../services/checkins';
 import { format, parseISO, startOfWeek, endOfWeek, subWeeks } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
@@ -51,6 +51,7 @@ export default function Dashboard() {
   const [logStatusFilter, setLogStatusFilter] = useState('');
   const [showImageGenerator, setShowImageGenerator] = useState(false);
   const [imageDate, setImageDate] = useState(format(new Date(), 'yyyy-MM-dd'));
+  const [imageType, setImageType] = useState('weekly');
 
   useEffect(() => {
     loadSeasons();
@@ -238,6 +239,20 @@ export default function Dashboard() {
   const totalDebt = totalExpected - totalPaid;
   const selectedSeason = allSeasons.find(s => s.id === selectedSeasonId) || currentSeason;
 
+  const handleGenerateRankingImage = async () => {
+    try {
+      setGeneratingImage(true);
+      const sorted = sortByRanking(rankingData);
+      const blob = await generateRankingImage(currentSeason, sorted, checkins);
+      downloadWeeklyImage(blob, `${currentSeason.title}_classificacao`);
+      setAlert({ type: 'success', message: 'Imagem de classificação baixada com sucesso!' });
+    } catch (error) {
+      setAlert({ type: 'error', message: `Erro ao gerar imagem: ${error.message}` });
+    } finally {
+      setGeneratingImage(false);
+    }
+  };
+
   const handleGenerateWeeklyImage = async (shouldShare = false) => {
     if (!imageDate) {
       setAlert({ type: 'error', message: 'Por favor, selecione uma data' });
@@ -385,24 +400,68 @@ export default function Dashboard() {
         <div className="mb-4 sm:mb-6">
           <Card title="📸 Gerar Imagem" className="bg-gradient-to-br from-purple-50 to-pink-50">
             <div className="space-y-3">
-              <p className="text-xs sm:text-sm text-gray-600">Selecione a data para gerar a imagem semanal</p>
-              <div className="flex flex-col sm:flex-row sm:items-center gap-3">
-                <label className="font-medium text-gray-700 text-sm">Data:</label>
-                <input
-                  type="date"
-                  value={imageDate}
-                  onChange={(e) => setImageDate(e.target.value)}
-                  className="px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 flex-1"
-                />
-                <Button
-                  onClick={() => handleGenerateWeeklyImage(false)}
-                  disabled={generatingImage}
-                  className="flex items-center gap-2 text-sm px-4 py-2 justify-center"
+              {/* Type selector */}
+              <div className="flex gap-2">
+                <button
+                  onClick={() => setImageType('weekly')}
+                  className={`flex-1 px-3 py-2 rounded-lg text-sm font-medium transition-all ${
+                    imageType === 'weekly'
+                      ? 'text-white shadow-md'
+                      : 'bg-white text-gray-600 border border-gray-200 hover:bg-gray-50'
+                  }`}
+                  style={imageType === 'weekly' ? { backgroundColor: primary } : {}}
                 >
-                  <Download className="w-4 h-4" />
-                  {generatingImage ? 'Gerando...' : 'Baixar Imagem'}
-                </Button>
+                  📅 Semanal
+                </button>
+                <button
+                  onClick={() => setImageType('ranking')}
+                  className={`flex-1 px-3 py-2 rounded-lg text-sm font-medium transition-all ${
+                    imageType === 'ranking'
+                      ? 'text-white shadow-md'
+                      : 'bg-white text-gray-600 border border-gray-200 hover:bg-gray-50'
+                  }`}
+                  style={imageType === 'ranking' ? { backgroundColor: primary } : {}}
+                >
+                  🏆 Classificação
+                </button>
               </div>
+
+              {imageType === 'weekly' ? (
+                <>
+                  <p className="text-xs sm:text-sm text-gray-600">Selecione a data para gerar a imagem semanal</p>
+                  <div className="flex flex-col sm:flex-row sm:items-center gap-3">
+                    <label className="font-medium text-gray-700 text-sm">Data:</label>
+                    <input
+                      type="date"
+                      value={imageDate}
+                      onChange={(e) => setImageDate(e.target.value)}
+                      className="px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 flex-1"
+                    />
+                    <Button
+                      onClick={() => handleGenerateWeeklyImage(false)}
+                      disabled={generatingImage}
+                      className="flex items-center gap-2 text-sm px-4 py-2 justify-center"
+                    >
+                      <Download className="w-4 h-4" />
+                      {generatingImage ? 'Gerando...' : 'Baixar Imagem'}
+                    </Button>
+                  </div>
+                </>
+              ) : (
+                <>
+                  <p className="text-xs sm:text-sm text-gray-600">
+                    Gera imagem com a classificação atual — posição, foto, total de presenças e últimos 7 check-ins de cada atleta.
+                  </p>
+                  <Button
+                    onClick={handleGenerateRankingImage}
+                    disabled={generatingImage}
+                    className="flex items-center gap-2 text-sm px-4 py-2 justify-center w-full sm:w-auto"
+                  >
+                    <Trophy className="w-4 h-4" />
+                    {generatingImage ? 'Gerando...' : 'Gerar Classificação'}
+                  </Button>
+                </>
+              )}
             </div>
           </Card>
         </div>
@@ -575,6 +634,21 @@ export default function Dashboard() {
                   })}
                 </tbody>
               </table>
+            </div>
+            <div className="mt-3 pt-3 border-t border-gray-100 flex flex-wrap gap-x-4 gap-y-1">
+              {[
+                { icon: '✅', label: 'Presenças' },
+                { icon: '❌', label: 'Faltas' },
+                { icon: '🔷', label: 'Folgas' },
+                { icon: '📄', label: 'Justificativas' },
+                { icon: '🚑', label: 'Hospital' },
+                { icon: '⭐', label: 'Bônus' },
+              ].map(({ icon, label }) => (
+                <span key={label} className="flex items-center gap-1 text-[11px] text-gray-400">
+                  <span>{icon}</span>
+                  <span>{label}</span>
+                </span>
+              ))}
             </div>
           </Card>
 
