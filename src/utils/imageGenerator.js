@@ -3,6 +3,23 @@ import { ptBR } from 'date-fns/locale';
 import { getAllCheckins, CheckinStatus, CalculatedStatus, StatusEmoji } from '../services/checkins';
 
 /**
+ * Carrega a fonte Inter do Google Fonts no contexto do documento.
+ * Necessário para que o canvas renderize a mesma fonte em todos os dispositivos
+ * (Segoe UI não existe em iOS/Android).
+ */
+const loadFont = async () => {
+  if (document.fonts.check('12px Inter')) return;
+  if (!document.head.querySelector('#inter-font-link')) {
+    const link = document.createElement('link');
+    link.id = 'inter-font-link';
+    link.rel = 'stylesheet';
+    link.href = 'https://fonts.googleapis.com/css2?family=Inter:wght@400;700&display=swap';
+    document.head.appendChild(link);
+  }
+  await document.fonts.ready;
+};
+
+/**
  * Abrevia nomes compostos mantendo apenas a inicial dos primeiros nomes
  * Exemplo: "Fernando Camargo" -> "F. Camargo"
  * Exemplo: "Giovane Souza Morais" -> "G. S. Morais"
@@ -27,6 +44,8 @@ const abbreviateName = (fullName) => {
 export const generateWeeklyImage = async (season, athletes, backgroundImageUrl, startDate, endDate) => {
   return new Promise(async (resolve, reject) => {
     try {
+      await loadFont();
+
       // Criar canvas
       const canvas = document.createElement('canvas');
       canvas.width = 720;
@@ -80,13 +99,13 @@ export const generateWeeklyImage = async (season, athletes, backgroundImageUrl, 
 
         // Desenhar título com período
         ctx.fillStyle = '#ffffff';
-        ctx.font = 'bold 36px Segoe UI';
+        ctx.font = 'bold 36px Inter';
         ctx.textAlign = 'center';
         const title = `${format(weekStart, 'dd', { locale: ptBR })} a ${format(weekEnd, 'dd \'de\' MMMM', { locale: ptBR })}`;
         ctx.fillText(title, canvas.width / 2, 80);
 
         // Desenhar cabeçalho dos dias da semana
-        ctx.font = 'bold 18px Segoe UI';
+        ctx.font = 'bold 18px Inter';
         const daysOfWeek = ['Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb', 'Dom'];
         daysOfWeek.forEach((day, index) => {
           const x = startX + 120 + (index * cellWidth) + (cellWidth / 2);
@@ -100,7 +119,7 @@ export const generateWeeklyImage = async (season, athletes, backgroundImageUrl, 
           const y = startY + (athleteIndex * cellHeight);
 
           // Nome do atleta (abreviado)
-          ctx.font = 'bold 20px Segoe UI';
+          ctx.font = 'bold 20px Inter';
           ctx.textAlign = 'left';
           ctx.fillStyle = '#ffffff';
           const abbreviatedName = abbreviateName(athlete.name);
@@ -224,6 +243,8 @@ export const downloadWeeklyImage = (blob, seasonTitle) => {
  * Mostra: posição, foto, nome, total de presenças e últimos 7 check-ins
  */
 export const generateRankingImage = async (season, rankedAthletes, allCheckins) => {
+  await loadFont();
+
   // ── Layout constants ──────────────────────────────────────────────
   const W            = 660;
   const ROW_H        = 70;
@@ -284,7 +305,7 @@ export const generateRankingImage = async (season, rankedAthletes, allCheckins) 
     ctx.fill();
     const initials = name.trim().split(/\s+/).map(p => p[0]).slice(0, 2).join('').toUpperCase();
     ctx.fillStyle = '#ffffff';
-    ctx.font = `bold ${Math.round(r * 0.75)}px Segoe UI`;
+    ctx.font = `bold ${Math.round(r * 0.75)}px Inter`;
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
     ctx.fillText(initials, cx, cy + 1);
@@ -358,17 +379,17 @@ export const generateRankingImage = async (season, rankedAthletes, allCheckins) 
   const TA = logoImg ? 'left' : 'center';
 
   ctx.fillStyle = '#f8fafc';
-  ctx.font = 'bold 34px Segoe UI';
+  ctx.font = 'bold 34px Inter';
   ctx.textAlign = TA;
   ctx.textBaseline = 'middle';
   ctx.fillText('CLASSIFICAÇÃO', TX, HMY - 22);
 
   ctx.fillStyle = '#94a3b8';
-  ctx.font = '18px Segoe UI';
+  ctx.font = '18px Inter';
   ctx.fillText(season.title || '', TX, HMY + 10);
 
   ctx.fillStyle = '#475569';
-  ctx.font = '13px Segoe UI';
+  ctx.font = '13px Inter';
   const todayStr = format(new Date(), "dd 'de' MMMM 'de' yyyy", { locale: ptBR });
   ctx.fillText(todayStr, TX, HMY + 34);
 
@@ -382,7 +403,7 @@ export const generateRankingImage = async (season, rankedAthletes, allCheckins) 
   ctx.beginPath(); ctx.moveTo(0, COL_Y + COL_HEADER_H); ctx.lineTo(W, COL_Y + COL_HEADER_H); ctx.stroke();
 
   const CMY = COL_Y + COL_HEADER_H / 2;
-  ctx.font = 'bold 11px Segoe UI';
+  ctx.font = 'bold 11px Inter';
   ctx.textBaseline = 'middle';
 
   ctx.fillStyle = '#64748b';
@@ -438,7 +459,7 @@ export const generateRankingImage = async (season, rankedAthletes, allCheckins) 
     ctx.fillStyle = i < 3 ? MEDAL[i] : '#1e3a5f';
     ctx.beginPath(); ctx.arc(POS_CX, midY, posR, 0, Math.PI * 2); ctx.fill();
     ctx.fillStyle = i < 3 ? '#0f172a' : '#94a3b8';
-    ctx.font = 'bold 13px Segoe UI';
+    ctx.font = 'bold 13px Inter';
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
     ctx.fillText(String(i + 1), POS_CX, midY + 1);
@@ -455,13 +476,13 @@ export const generateRankingImage = async (season, rankedAthletes, allCheckins) 
 
     // Athlete name
     ctx.fillStyle = '#f1f5f9';
-    ctx.font = 'bold 16px Segoe UI';
+    ctx.font = 'bold 16px Inter';
     ctx.textAlign = 'left';
     ctx.textBaseline = 'middle';
     ctx.fillText(abbreviateName(athlete.name), NAME_X, midY + 1, NAME_MAX);
 
     // Stats columns
-    ctx.font = 'bold 18px Segoe UI';
+    ctx.font = 'bold 18px Inter';
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
 
@@ -500,7 +521,7 @@ export const generateRankingImage = async (season, rankedAthletes, allCheckins) 
       const sym = STATUS_SYM[status];
       if (sym) {
         ctx.fillStyle = '#ffffff';
-        ctx.font = `bold ${isNewest ? 15 : 12}px Segoe UI`;
+        ctx.font = `bold ${isNewest ? 15 : 12}px Inter`;
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
         ctx.fillText(sym, cx, midY + 1);
