@@ -27,9 +27,9 @@ import { ptBR } from 'date-fns/locale';
 import * as XLSX from 'xlsx';
 
 export default function Dashboard() {
-  const { currentSeason } = useSeason();
+  const { currentSeason, loading: seasonLoading } = useSeason();
   const { primary } = useThemeColor();
-  const { athletes, getAthleteById } = useAthletes();
+  const { athletes, getAthleteById, loading: athletesLoading } = useAthletes();
   const { isAdmin } = useAuth();
   const [loading, setLoading] = useState(true);
   const [checkins, setCheckins] = useState([]);
@@ -210,6 +210,10 @@ export default function Dashboard() {
     }
   };
 
+  if (seasonLoading || athletesLoading || loading) {
+    return <Loading text="Carregando dashboard..." />;
+  }
+
   if (!currentSeason) {
     return (
       <div className="container mx-auto px-4 py-8">
@@ -226,10 +230,6 @@ export default function Dashboard() {
         </Card>
       </div>
     );
-  }
-
-  if (loading) {
-    return <Loading text="Carregando dashboard..." />;
   }
 
   const rankedAthletes = sortByRanking(rankingData);

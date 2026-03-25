@@ -301,9 +301,6 @@ export default function Checkin() {
                         <h3 className="text-xl font-bold text-gray-800">
                           {athlete.name}
                         </h3>
-                        <p className="text-sm text-gray-600">
-                          {athlete.experienceLevel}
-                        </p>
                       </div>
                     </div>
 

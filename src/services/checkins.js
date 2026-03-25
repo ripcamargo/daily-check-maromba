@@ -8,6 +8,7 @@ import {
   orderBy
 } from 'firebase/firestore';
 import { db } from './firebase';
+import { getAllSeasons } from './seasons';
 import { format, startOfWeek, endOfWeek, parseISO } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 
@@ -341,6 +342,149 @@ export const calculateAthleteStats = async (seasonId, athleteId) => {
     console.error('Erro ao calcular estatísticas:', error);
     throw error;
   }
+};
+
+/**
+ * Calcula estatísticas gerais de check-in de um atleta em todas as temporadas
+ */
+export const calculateAthleteGlobalStats = async (athleteId) => {
+  try {
+    const allSeasons = await getAllSeasons();
+
+    const stats = {
+      present: 0,
+      rest: 0,
+      absence: 0,
+      hospital: 0,
+      justified: 0,
+      extra: 0,
+      notSet: 0,
+      total: 0,
+      seasonsWithRecords: 0,
+      hasChampionTitle: false,
+      hasRunnerUpTitle: false,
+      championBonus: 0,
+      runnerUpBonus: 0
+    };
+
+    for (const season of allSeasons) {
+      if (season?.champions?.first?.athleteId === athleteId) {
+        stats.hasChampionTitle = true;
+      }
+
+      if (season?.champions?.second?.athleteId === athleteId) {
+        stats.hasRunnerUpTitle = true;
+      }
+
+      const seasonCheckins = await getAllCheckins(season.id);
+      let hasRecordsInSeason = false;
+
+      seasonCheckins.forEach(checkin => {
+        const athleteStatus = checkin.athletes?.[athleteId];
+
+        if (!athleteStatus) return;
+
+        hasRecordsInSeason = true;
+        stats.total++;
+
+        switch (athleteStatus.status) {
+          case CheckinStatus.PRESENT:
+            stats.present++;
+            break;
+          case CalculatedStatus.REST:
+            stats.rest++;
+            break;
+          case CalculatedStatus.ABSENCE:
+            stats.absence++;
+            break;
+          case CheckinStatus.HOSPITAL:
+            stats.hospital++;
+            break;
+          case CheckinStatus.JUSTIFIED:
+            stats.justified++;
+            break;
+          case CalculatedStatus.EXTRA:
+            stats.extra++;
+            break;
+          default:
+            stats.notSet++;
+        }
+      });
+
+      if (hasRecordsInSeason) {
+        stats.seasonsWithRecords++;
+      }
+    }
+
+    stats.championBonus = stats.hasChampionTitle ? 30 : 0;
+    stats.runnerUpBonus = stats.hasRunnerUpTitle ? 15 : 0;
+
+    return stats;
+  } catch (error) {
+    console.error('Erro ao calcular estatísticas gerais do atleta:', error);
+    throw error;
+  }
+};
+
+/**
+ * Calcula pontos de XP baseado nas estatísticas globais
+ * - Presença: +3 por
+ * - Falta: -2 por
+ * - Descanso/Justificado/Hospital: -1 por
+ * - Extra (estrela): +4 por
+ */
+export const calculateAthleteXP = (stats) => {
+  if (!stats) return 0;
+
+  const xp =
+    (stats.present * 3) -
+    (stats.absence * 2) -
+    (stats.rest + stats.justified + stats.hospital) +
+    (stats.extra * 4) +
+    (stats.championBonus || 0) +
+    (stats.runnerUpBonus || 0);
+
+  return Math.max(0, xp);
+};
+
+/**
+ * Sistema de ranks baseado em XP
+ */
+export const RankSystem = {
+  FRANGUINHO: { name: 'Franguinho', minXP: 0, maxXP: 79 },
+  SAUDAVEL: { name: 'Saudável', minXP: 80, maxXP: 129 },
+  ATLETA: { name: 'Atleta', minXP: 130, maxXP: 179 },
+  BRACUDINHO: { name: 'Braçudinho', minXP: 180, maxXP: 249 },
+  MAROMBA: { name: 'Maromba', minXP: 250, maxXP: 319 },
+  TANQUE_GUERRA: { name: 'Tanque de Guerra', minXP: 320, maxXP: 499 },
+  MONSTRO: { name: 'Monstro', minXP: 500, maxXP: 589 },
+  LENDA: { name: 'Lenda', minXP: 590, maxXP: 699 },
+  DEUS_SHAPE: { name: 'Deus do Shape', minXP: 700, maxXP: Infinity }
+};
+
+/**
+ * Obtém o rank de um atleta baseado no XP
+ */
+export const getAthleteRank = (xp) => {
+  const xpValue = xp || 0;
+  const ranks = Object.values(RankSystem);
+  
+  for (const rank of ranks) {
+    if (xpValue >= rank.minXP && xpValue <= rank.maxXP) {
+      return rank;
+    }
+  }
+  
+  return RankSystem.FRANGUINHO;
+};
+
+/**
+ * Obtém rank combinado com XP para exibição
+ */
+export const getAthleteRankWithXP = (stats) => {
+  const xp = calculateAthleteXP(stats);
+  const rank = getAthleteRank(xp);
+  return { ...rank, xp };
 };
 
 /**

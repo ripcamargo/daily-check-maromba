@@ -59,6 +59,14 @@ export const formatExperienceLevel = (level) => {
 };
 
 /**
+ * Formata o rank com XP para exibição
+ */
+export const formatRankWithXP = (rankData) => {
+  if (!rankData) return '';
+  return `${rankData.name} • ${rankData.xp} XP`;
+};
+
+/**
  * Gera iniciais de um nome
  */
 export const getInitials = (name) => {
