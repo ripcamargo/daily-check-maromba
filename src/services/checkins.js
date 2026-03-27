@@ -8,7 +8,7 @@ import {
   orderBy
 } from 'firebase/firestore';
 import { db } from './firebase';
-import { getAllSeasons } from './seasons';
+import { getAllSeasons, DEFAULT_XP_CONFIG } from './seasons';
 import { format, startOfWeek, endOfWeek, parseISO } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 
@@ -364,15 +364,32 @@ export const calculateAthleteGlobalStats = async (athleteId) => {
       hasChampionTitle: false,
       hasRunnerUpTitle: false,
       championBonus: 0,
-      runnerUpBonus: 0
+      runnerUpBonus: 0,
+      xp: 0
     };
 
     for (const season of allSeasons) {
-      if (season?.champions?.first?.athleteId === athleteId) {
+      const xpConfig = {
+        ...DEFAULT_XP_CONFIG,
+        ...(season.xpConfig || {})
+      };
+      const seasonStats = {
+        present: 0,
+        rest: 0,
+        absence: 0,
+        hospital: 0,
+        justified: 0,
+        extra: 0,
+        notSet: 0
+      };
+      const isSeasonChampion = season?.champions?.first?.athleteId === athleteId;
+      const isSeasonRunnerUp = season?.champions?.second?.athleteId === athleteId;
+
+      if (isSeasonChampion) {
         stats.hasChampionTitle = true;
       }
 
-      if (season?.champions?.second?.athleteId === athleteId) {
+      if (isSeasonRunnerUp) {
         stats.hasRunnerUpTitle = true;
       }
 
@@ -390,34 +407,51 @@ export const calculateAthleteGlobalStats = async (athleteId) => {
         switch (athleteStatus.status) {
           case CheckinStatus.PRESENT:
             stats.present++;
+            seasonStats.present++;
             break;
           case CalculatedStatus.REST:
             stats.rest++;
+            seasonStats.rest++;
             break;
           case CalculatedStatus.ABSENCE:
             stats.absence++;
+            seasonStats.absence++;
             break;
           case CheckinStatus.HOSPITAL:
             stats.hospital++;
+            seasonStats.hospital++;
             break;
           case CheckinStatus.JUSTIFIED:
             stats.justified++;
+            seasonStats.justified++;
             break;
           case CalculatedStatus.EXTRA:
             stats.extra++;
+            seasonStats.extra++;
             break;
           default:
             stats.notSet++;
+            seasonStats.notSet++;
         }
       });
 
       if (hasRecordsInSeason) {
+        const seasonChampionBonus = isSeasonChampion ? xpConfig.championBonus : 0;
+        const seasonRunnerUpBonus = isSeasonRunnerUp ? xpConfig.runnerUpBonus : 0;
+
+        stats.championBonus += seasonChampionBonus;
+        stats.runnerUpBonus += seasonRunnerUpBonus;
+        stats.xp += calculateAthleteXP(
+          {
+            ...seasonStats,
+            championBonus: seasonChampionBonus,
+            runnerUpBonus: seasonRunnerUpBonus
+          },
+          xpConfig
+        );
         stats.seasonsWithRecords++;
       }
     }
-
-    stats.championBonus = stats.hasChampionTitle ? 30 : 0;
-    stats.runnerUpBonus = stats.hasRunnerUpTitle ? 15 : 0;
 
     return stats;
   } catch (error) {
@@ -428,19 +462,23 @@ export const calculateAthleteGlobalStats = async (athleteId) => {
 
 /**
  * Calcula pontos de XP baseado nas estatísticas globais
- * - Presença: +3 por
- * - Falta: -2 por
- * - Descanso/Justificado/Hospital: -1 por
- * - Extra (estrela): +4 por
+ * Usa a configuração de XP da temporada quando disponível.
  */
-export const calculateAthleteXP = (stats) => {
+export const calculateAthleteXP = (stats, xpConfig = DEFAULT_XP_CONFIG) => {
   if (!stats) return 0;
 
+  const rules = {
+    ...DEFAULT_XP_CONFIG,
+    ...(xpConfig || {})
+  };
+
   const xp =
-    (stats.present * 3) -
-    (stats.absence * 2) -
-    (stats.rest + stats.justified + stats.hospital) +
-    (stats.extra * 4) +
+    (stats.present * rules.present) +
+    (stats.absence * rules.absence) +
+    (stats.rest * rules.rest) +
+    (stats.justified * rules.justified) +
+    (stats.hospital * rules.hospital) +
+    (stats.extra * rules.extra) +
     (stats.championBonus || 0) +
     (stats.runnerUpBonus || 0);
 
@@ -482,7 +520,7 @@ export const getAthleteRank = (xp) => {
  * Obtém rank combinado com XP para exibição
  */
 export const getAthleteRankWithXP = (stats) => {
-  const xp = calculateAthleteXP(stats);
+  const xp = Number.isFinite(stats?.xp) ? stats.xp : calculateAthleteXP(stats);
   const rank = getAthleteRank(xp);
   return { ...rank, xp };
 };

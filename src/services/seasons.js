@@ -14,6 +14,41 @@ import { db } from './firebase';
 
 const COLLECTION_NAME = 'seasons';
 
+export const DEFAULT_XP_CONFIG = {
+  present: 3,
+  absence: -2,
+  rest: -1,
+  justified: -1,
+  hospital: -1,
+  extra: 4,
+  championBonus: 30,
+  runnerUpBonus: 15
+};
+
+export const normalizeXPConfig = (xpConfig = {}) => {
+  return {
+    present: Number.isFinite(Number(xpConfig.present)) ? Number(xpConfig.present) : DEFAULT_XP_CONFIG.present,
+    absence: Number.isFinite(Number(xpConfig.absence)) ? Number(xpConfig.absence) : DEFAULT_XP_CONFIG.absence,
+    rest: Number.isFinite(Number(xpConfig.rest)) ? Number(xpConfig.rest) : DEFAULT_XP_CONFIG.rest,
+    justified: Number.isFinite(Number(xpConfig.justified)) ? Number(xpConfig.justified) : DEFAULT_XP_CONFIG.justified,
+    hospital: Number.isFinite(Number(xpConfig.hospital)) ? Number(xpConfig.hospital) : DEFAULT_XP_CONFIG.hospital,
+    extra: Number.isFinite(Number(xpConfig.extra)) ? Number(xpConfig.extra) : DEFAULT_XP_CONFIG.extra,
+    championBonus: Number.isFinite(Number(xpConfig.championBonus)) ? Number(xpConfig.championBonus) : DEFAULT_XP_CONFIG.championBonus,
+    runnerUpBonus: Number.isFinite(Number(xpConfig.runnerUpBonus)) ? Number(xpConfig.runnerUpBonus) : DEFAULT_XP_CONFIG.runnerUpBonus
+  };
+};
+
+const mapSeasonFromDoc = (seasonDoc) => {
+  const data = seasonDoc.data();
+  return {
+    id: seasonDoc.id,
+    ...data,
+    startDate: data.startDate?.toDate(),
+    endDate: data.endDate?.toDate(),
+    xpConfig: normalizeXPConfig(data.xpConfig)
+  };
+};
+
 /**
  * Converte string de data para Date object no timezone local
  */
@@ -31,6 +66,7 @@ export const createSeason = async (seasonData) => {
       ...seasonData,
       startDate: parseLocalDate(seasonData.startDate),
       endDate: parseLocalDate(seasonData.endDate),
+      xpConfig: normalizeXPConfig(seasonData.xpConfig),
       neutralDays: seasonData.neutralDays || [],
       createdAt: new Date(),
       active: true
@@ -69,12 +105,7 @@ export const getAllSeasons = async () => {
   try {
     const q = query(collection(db, COLLECTION_NAME), orderBy('startDate', 'desc'));
     const querySnapshot = await getDocs(q);
-    return querySnapshot.docs.map(doc => ({
-      id: doc.id,
-      ...doc.data(),
-      startDate: doc.data().startDate?.toDate(),
-      endDate: doc.data().endDate?.toDate()
-    }));
+    return querySnapshot.docs.map(mapSeasonFromDoc);
   } catch (error) {
     console.error('Erro ao buscar temporadas:', error);
     throw error;
@@ -94,12 +125,7 @@ export const getActiveSeason = async () => {
     
     if (!querySnapshot.empty) {
       // Se houver múltiplas temporadas ativas, pega a mais recente
-      const seasons = querySnapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data(),
-        startDate: doc.data().startDate?.toDate(),
-        endDate: doc.data().endDate?.toDate()
-      }));
+      const seasons = querySnapshot.docs.map(mapSeasonFromDoc);
       
       // Ordena manualmente por startDate
       seasons.sort((a, b) => b.startDate - a.startDate);
@@ -121,12 +147,7 @@ export const getSeasonById = async (seasonId) => {
     const docSnap = await getDoc(docRef);
     
     if (docSnap.exists()) {
-      return {
-        id: docSnap.id,
-        ...docSnap.data(),
-        startDate: docSnap.data().startDate?.toDate(),
-        endDate: docSnap.data().endDate?.toDate()
-      };
+      return mapSeasonFromDoc(docSnap);
     } else {
       throw new Error('Temporada não encontrada');
     }
@@ -149,6 +170,9 @@ export const updateSeason = async (seasonId, updates) => {
     }
     if (updates.endDate) {
       updateData.endDate = parseLocalDate(updates.endDate);
+    }
+    if (updates.xpConfig) {
+      updateData.xpConfig = normalizeXPConfig(updates.xpConfig);
     }
     
     await updateDoc(seasonRef, updateData);

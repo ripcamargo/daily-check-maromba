@@ -16,13 +16,25 @@ import {
   uploadSeasonLogo,
   getAllSeasons,
   finalizeSeason,
-  deleteSeason
+  deleteSeason,
+  DEFAULT_XP_CONFIG
 } from '../services/seasons';
 import { getAllCheckins, processCheckins, saveCheckins, CheckinStatus } from '../services/checkins';
 import { formatDate, formatCurrency } from '../utils/formatters';
 import { calculateStats } from '../utils/calculator';
 import { sortByRanking } from '../utils/ranking';
 import { useEffect } from 'react';
+
+const getXPFormFields = (xpConfig = DEFAULT_XP_CONFIG) => ({
+  xpPresent: String(xpConfig.present),
+  xpAbsence: String(xpConfig.absence),
+  xpRest: String(xpConfig.rest),
+  xpJustified: String(xpConfig.justified),
+  xpHospital: String(xpConfig.hospital),
+  xpExtra: String(xpConfig.extra),
+  xpChampionBonus: String(xpConfig.championBonus),
+  xpRunnerUpBonus: String(xpConfig.runnerUpBonus)
+});
 
 export default function Seasons() {
   const { athletes } = useAthletes();
@@ -51,7 +63,24 @@ export default function Seasons() {
     backgroundFile: null,
     neutralDays: [],
     bonusDates: [],
-    bonusBenefit: '-'
+    bonusBenefit: '-',
+    ...getXPFormFields()
+  });
+
+  const parseXPNumber = (value, fallback) => {
+    const parsed = Number(value);
+    return Number.isFinite(parsed) ? parsed : fallback;
+  };
+
+  const buildXPConfigFromForm = () => ({
+    present: parseXPNumber(formData.xpPresent, DEFAULT_XP_CONFIG.present),
+    absence: parseXPNumber(formData.xpAbsence, DEFAULT_XP_CONFIG.absence),
+    rest: parseXPNumber(formData.xpRest, DEFAULT_XP_CONFIG.rest),
+    justified: parseXPNumber(formData.xpJustified, DEFAULT_XP_CONFIG.justified),
+    hospital: parseXPNumber(formData.xpHospital, DEFAULT_XP_CONFIG.hospital),
+    extra: parseXPNumber(formData.xpExtra, DEFAULT_XP_CONFIG.extra),
+    championBonus: parseXPNumber(formData.xpChampionBonus, DEFAULT_XP_CONFIG.championBonus),
+    runnerUpBonus: parseXPNumber(formData.xpRunnerUpBonus, DEFAULT_XP_CONFIG.runnerUpBonus)
   });
 
   useEffect(() => {
@@ -82,7 +111,8 @@ export default function Seasons() {
       backgroundFile: null,
       neutralDays: [],
       bonusDates: [],
-      bonusBenefit: '-'
+      bonusBenefit: '-',
+      ...getXPFormFields()
     });
     setImportFromSeasonId('');
     setIsModalOpen(true);
@@ -99,7 +129,8 @@ export default function Seasons() {
         participants: season.participants || [],
         neutralDays: season.neutralDays || [],
         bonusDates: [],
-        bonusBenefit: season.bonusBenefit || '-'
+        bonusBenefit: season.bonusBenefit || '-',
+        ...getXPFormFields(season.xpConfig)
       }));
     }
   };
@@ -190,7 +221,8 @@ export default function Seasons() {
         backgroundFile: null,
         neutralDays: currentSeason.neutralDays || [],
         bonusDates: currentSeason.bonusDates || [],
-        bonusBenefit: currentSeason.bonusBenefit || '-'
+        bonusBenefit: currentSeason.bonusBenefit || '-',
+        ...getXPFormFields(currentSeason.xpConfig)
       });
       setIsConfigModalOpen(true);
     }
@@ -213,6 +245,7 @@ export default function Seasons() {
         neutralDays: formData.neutralDays,
         bonusDates: formData.bonusDates,
         bonusBenefit: formData.bonusBenefit,
+        xpConfig: buildXPConfigFromForm(),
         logoUrl: '',
         backgroundUrl: ''
       };
@@ -262,7 +295,8 @@ export default function Seasons() {
         participants: formData.participants,
         neutralDays: formData.neutralDays,
         bonusDates: formData.bonusDates,
-        bonusBenefit: formData.bonusBenefit
+        bonusBenefit: formData.bonusBenefit,
+        xpConfig: buildXPConfigFromForm()
       };
 
       if (formData.logoFile) {
@@ -573,7 +607,7 @@ export default function Seasons() {
               ))}
             </select>
             <p className="text-sm text-gray-500 mt-1">
-              Importa participantes e configurações (multa, folgas, etc.) de uma temporada finalizada
+              Importa participantes e configurações (multa, folgas, XP, etc.) de uma temporada finalizada
             </p>
           </div>
 
@@ -639,6 +673,68 @@ export default function Seasons() {
               <option value="6">Sábado</option>
             </select>
             <p className="text-sm text-gray-500 mt-1">Escolha o dia em que a semana útil começa para cálculo de faltas</p>
+          </div>
+
+          <div className="mb-6 border border-gray-200 rounded-lg p-4 bg-gray-50">
+            <h4 className="text-sm font-semibold text-gray-800 mb-3">Configuração de XP da Temporada</h4>
+            <div className="grid grid-cols-2 gap-4">
+              <Input
+                label="XP Presença"
+                type="number"
+                value={formData.xpPresent}
+                onChange={(e) => setFormData({ ...formData, xpPresent: e.target.value })}
+                required
+              />
+              <Input
+                label="XP Falta"
+                type="number"
+                value={formData.xpAbsence}
+                onChange={(e) => setFormData({ ...formData, xpAbsence: e.target.value })}
+                required
+              />
+              <Input
+                label="XP Folga"
+                type="number"
+                value={formData.xpRest}
+                onChange={(e) => setFormData({ ...formData, xpRest: e.target.value })}
+                required
+              />
+              <Input
+                label="XP Justificado"
+                type="number"
+                value={formData.xpJustified}
+                onChange={(e) => setFormData({ ...formData, xpJustified: e.target.value })}
+                required
+              />
+              <Input
+                label="XP Hospital"
+                type="number"
+                value={formData.xpHospital}
+                onChange={(e) => setFormData({ ...formData, xpHospital: e.target.value })}
+                required
+              />
+              <Input
+                label="XP Extra"
+                type="number"
+                value={formData.xpExtra}
+                onChange={(e) => setFormData({ ...formData, xpExtra: e.target.value })}
+                required
+              />
+              <Input
+                label="Bônus Campeão"
+                type="number"
+                value={formData.xpChampionBonus}
+                onChange={(e) => setFormData({ ...formData, xpChampionBonus: e.target.value })}
+                required
+              />
+              <Input
+                label="Bônus Vice"
+                type="number"
+                value={formData.xpRunnerUpBonus}
+                onChange={(e) => setFormData({ ...formData, xpRunnerUpBonus: e.target.value })}
+                required
+              />
+            </div>
           </div>
 
           <div className="mb-4">
@@ -771,6 +867,68 @@ export default function Seasons() {
               <option value="6">Sábado</option>
             </select>
             <p className="text-sm text-gray-500 mt-1">Escolha o dia em que a semana útil começa para cálculo de faltas</p>
+          </div>
+
+          <div className="mb-6 border border-gray-200 rounded-lg p-4 bg-gray-50">
+            <h4 className="text-sm font-semibold text-gray-800 mb-3">Configuração de XP da Temporada</h4>
+            <div className="grid grid-cols-2 gap-4">
+              <Input
+                label="XP Presença"
+                type="number"
+                value={formData.xpPresent}
+                onChange={(e) => setFormData({ ...formData, xpPresent: e.target.value })}
+                required
+              />
+              <Input
+                label="XP Falta"
+                type="number"
+                value={formData.xpAbsence}
+                onChange={(e) => setFormData({ ...formData, xpAbsence: e.target.value })}
+                required
+              />
+              <Input
+                label="XP Folga"
+                type="number"
+                value={formData.xpRest}
+                onChange={(e) => setFormData({ ...formData, xpRest: e.target.value })}
+                required
+              />
+              <Input
+                label="XP Justificado"
+                type="number"
+                value={formData.xpJustified}
+                onChange={(e) => setFormData({ ...formData, xpJustified: e.target.value })}
+                required
+              />
+              <Input
+                label="XP Hospital"
+                type="number"
+                value={formData.xpHospital}
+                onChange={(e) => setFormData({ ...formData, xpHospital: e.target.value })}
+                required
+              />
+              <Input
+                label="XP Extra"
+                type="number"
+                value={formData.xpExtra}
+                onChange={(e) => setFormData({ ...formData, xpExtra: e.target.value })}
+                required
+              />
+              <Input
+                label="Bônus Campeão"
+                type="number"
+                value={formData.xpChampionBonus}
+                onChange={(e) => setFormData({ ...formData, xpChampionBonus: e.target.value })}
+                required
+              />
+              <Input
+                label="Bônus Vice"
+                type="number"
+                value={formData.xpRunnerUpBonus}
+                onChange={(e) => setFormData({ ...formData, xpRunnerUpBonus: e.target.value })}
+                required
+              />
+            </div>
           </div>
 
           <div className="mb-4">
@@ -987,6 +1145,20 @@ export default function Seasons() {
               <label className="block text-sm font-medium text-gray-700 mb-1">Dia de Início da Semana</label>
               <div className="px-4 py-2 bg-gray-100 border border-gray-300 rounded-lg text-gray-700">
                 {['Domingo', 'Segunda-feira', 'Terça-feira', 'Quarta-feira', 'Quinta-feira', 'Sexta-feira', 'Sábado'][viewingSeason.weekStartsOn || 1]}
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Configuração de XP</label>
+              <div className="grid grid-cols-2 gap-3">
+                <div className="px-4 py-2 bg-gray-100 border border-gray-300 rounded-lg text-gray-700">Presença: {viewingSeason.xpConfig?.present}</div>
+                <div className="px-4 py-2 bg-gray-100 border border-gray-300 rounded-lg text-gray-700">Falta: {viewingSeason.xpConfig?.absence}</div>
+                <div className="px-4 py-2 bg-gray-100 border border-gray-300 rounded-lg text-gray-700">Folga: {viewingSeason.xpConfig?.rest}</div>
+                <div className="px-4 py-2 bg-gray-100 border border-gray-300 rounded-lg text-gray-700">Justificado: {viewingSeason.xpConfig?.justified}</div>
+                <div className="px-4 py-2 bg-gray-100 border border-gray-300 rounded-lg text-gray-700">Hospital: {viewingSeason.xpConfig?.hospital}</div>
+                <div className="px-4 py-2 bg-gray-100 border border-gray-300 rounded-lg text-gray-700">Extra: {viewingSeason.xpConfig?.extra}</div>
+                <div className="px-4 py-2 bg-gray-100 border border-gray-300 rounded-lg text-gray-700">Bônus campeão: {viewingSeason.xpConfig?.championBonus}</div>
+                <div className="px-4 py-2 bg-gray-100 border border-gray-300 rounded-lg text-gray-700">Bônus vice: {viewingSeason.xpConfig?.runnerUpBonus}</div>
               </div>
             </div>
 
