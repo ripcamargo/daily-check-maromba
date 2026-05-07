@@ -167,9 +167,30 @@ export default function Dashboard() {
         });
       });
       
+      // Aplicar vale-folga cronologicamente no log:
+      // cada ⭐ conquistada cancela a próxima ❌ falta do atleta
+      if (selectedSeason.bonusBenefit === 'vale-folga') {
+        const athleteIds = [...new Set(log.map(l => l.athleteId))];
+        athleteIds.forEach(athleteId => {
+          const athleteEntries = log
+            .filter(l => l.athleteId === athleteId)
+            .sort((a, b) => a.date.localeCompare(b.date)); // cronológico
+          let stars = 0;
+          athleteEntries.forEach(entry => {
+            if (entry.status === CalculatedStatus.EXTRA) {
+              stars++;
+            } else if (entry.status === CalculatedStatus.ABSENCE && stars > 0) {
+              entry.status = CalculatedStatus.REST;
+              entry.emoji = StatusEmoji[CalculatedStatus.REST];
+              stars--;
+            }
+          });
+        });
+      }
+
       // Ordenar do mais recente para o mais antigo
       log.sort((a, b) => b.date.localeCompare(a.date));
-      
+
       setAttendanceLog(log);
 
       // Calcula dados de ranking
