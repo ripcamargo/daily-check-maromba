@@ -333,24 +333,26 @@ export const generateRankingImage = async (season, rankedAthletes, allCheckins) 
 
   // ── Status style maps ─────────────────────────────────────────────
   const STATUS_BG = {
-    [CheckinStatus.PRESENT]:    '#22c55e',
-    [CheckinStatus.ABSENT]:     '#ef4444',
-    [CalculatedStatus.EXTRA]:   '#eab308',
-    [CalculatedStatus.ABSENCE]: '#ef4444',
-    [CalculatedStatus.REST]:    '#3b82f6',
-    [CheckinStatus.JUSTIFIED]:  '#8b5cf6',
-    [CheckinStatus.HOSPITAL]:   '#f97316',
-    [CheckinStatus.NOT_SET]:    'rgba(255,255,255,0.08)',
+    [CheckinStatus.PRESENT]:         '#22c55e',
+    [CheckinStatus.ABSENT]:          '#ef4444',
+    [CalculatedStatus.EXTRA]:        '#eab308',
+    [CalculatedStatus.ABSENCE]:      '#ef4444',
+    [CalculatedStatus.REST]:         '#3b82f6',
+    [CalculatedStatus.BONUS_REST]:   '#f97316',
+    [CheckinStatus.JUSTIFIED]:       '#8b5cf6',
+    [CheckinStatus.HOSPITAL]:        '#f97316',
+    [CheckinStatus.NOT_SET]:         'rgba(255,255,255,0.08)',
   };
   const STATUS_SYM = {
-    [CheckinStatus.PRESENT]:    '✓',
-    [CheckinStatus.ABSENT]:     '✗',
-    [CalculatedStatus.EXTRA]:   '★',
-    [CalculatedStatus.ABSENCE]: '✗',
-    [CalculatedStatus.REST]:    '-',
-    [CheckinStatus.JUSTIFIED]:  'J',
-    [CheckinStatus.HOSPITAL]:   'H',
-    [CheckinStatus.NOT_SET]:    '',
+    [CheckinStatus.PRESENT]:         '✓',
+    [CheckinStatus.ABSENT]:          '✗',
+    [CalculatedStatus.EXTRA]:        '★',
+    [CalculatedStatus.ABSENCE]:      '✗',
+    [CalculatedStatus.REST]:         '-',
+    [CalculatedStatus.BONUS_REST]:   '◆',
+    [CheckinStatus.JUSTIFIED]:       'J',
+    [CheckinStatus.HOSPITAL]:        'H',
+    [CheckinStatus.NOT_SET]:         '',
   };
 
   // ── Background ────────────────────────────────────────────────────

@@ -453,6 +453,7 @@ export default function Seasons() {
         weekStartsOn: currentSeason.weekStartsOn ?? 1,
         weeklyRestLimit: currentSeason.weeklyRestLimit ?? 2,
         bonusDates: currentSeason.bonusDates || [],
+        bonusBenefit: currentSeason.bonusBenefit || '-',
         participants: currentSeason.participants || []
       };
 

@@ -167,27 +167,6 @@ export default function Dashboard() {
         });
       });
       
-      // Aplicar vale-folga cronologicamente no log:
-      // cada ⭐ conquistada cancela a próxima ❌ falta do atleta
-      if (selectedSeason.bonusBenefit === 'vale-folga') {
-        const athleteIds = [...new Set(log.map(l => l.athleteId))];
-        athleteIds.forEach(athleteId => {
-          const athleteEntries = log
-            .filter(l => l.athleteId === athleteId)
-            .sort((a, b) => a.date.localeCompare(b.date)); // cronológico
-          let stars = 0;
-          athleteEntries.forEach(entry => {
-            if (entry.status === CalculatedStatus.EXTRA) {
-              stars++;
-            } else if (entry.status === CalculatedStatus.ABSENCE && stars > 0) {
-              entry.status = CalculatedStatus.REST;
-              entry.emoji = StatusEmoji[CalculatedStatus.REST];
-              stars--;
-            }
-          });
-        });
-      }
-
       // Ordenar do mais recente para o mais antigo
       log.sort((a, b) => b.date.localeCompare(a.date));
 
@@ -339,10 +318,22 @@ export default function Dashboard() {
         [CalculatedStatus.EXTRA]: 'Presença Bônus'
       };
 
+      const statusLabelsExcel = {
+        [CheckinStatus.NOT_SET]: 'Não Marcado',
+        [CheckinStatus.PRESENT]: 'Presente',
+        [CheckinStatus.ABSENT]: 'Ausente',
+        [CheckinStatus.HOSPITAL]: 'Hospital',
+        [CheckinStatus.JUSTIFIED]: 'Justificado',
+        [CalculatedStatus.REST]: 'Folga',
+        [CalculatedStatus.BONUS_REST]: 'Folga Bônus (Vale-folga)',
+        [CalculatedStatus.ABSENCE]: 'Falta',
+        [CalculatedStatus.EXTRA]: 'Presença Bônus'
+      };
+
       const excelData = attendanceLog.map(log => ({
         'Data': format(parseISO(log.date), 'dd/MM/yyyy (EEEE)', { locale: ptBR }),
         'Atleta': log.athleteName,
-        'Status': statusLabels[log.status],
+        'Status': statusLabelsExcel[log.status],
         'Emoji': StatusEmoji[log.status],
         'Descrição': log.description
       }));
@@ -894,6 +885,7 @@ export default function Dashboard() {
                 <option value={CheckinStatus.HOSPITAL}>Hospital</option>
                 <option value={CheckinStatus.JUSTIFIED}>Justificado</option>
                 <option value={CalculatedStatus.REST}>Folga</option>
+                <option value={CalculatedStatus.BONUS_REST}>🔶 Folga Bônus (Vale-folga)</option>
                 <option value={CalculatedStatus.ABSENCE}>Falta</option>
                 <option value={CalculatedStatus.EXTRA}>Presença Bônus</option>
               </select>
@@ -932,18 +924,20 @@ export default function Dashboard() {
                     [CheckinStatus.HOSPITAL]: 'bg-orange-50 text-orange-800',
                     [CheckinStatus.JUSTIFIED]: 'bg-indigo-50 text-indigo-800',
                     [CalculatedStatus.REST]: 'bg-blue-50 text-blue-800',
+                    [CalculatedStatus.BONUS_REST]: 'bg-orange-50 text-orange-800',
                     [CalculatedStatus.ABSENCE]: 'bg-red-50 text-red-800',
                     [CalculatedStatus.EXTRA]: 'bg-yellow-50 text-yellow-800'
                   };
-                  
+
                   const statusLabels = {
                     [CheckinStatus.NOT_SET]: 'Não Marcado',
                     [CheckinStatus.PRESENT]: 'Presente',
                     [CheckinStatus.ABSENT]: 'Ausente (marcado)',
                     [CheckinStatus.HOSPITAL]: 'Hospital',
                     [CheckinStatus.JUSTIFIED]: 'Justificado',
-                    [CalculatedStatus.REST]: 'Folga (calculado)',
-                    [CalculatedStatus.ABSENCE]: 'Falta (calculado)',
+                    [CalculatedStatus.REST]: 'Folga',
+                    [CalculatedStatus.BONUS_REST]: 'Folga Bônus 🔶 (Vale-folga)',
+                    [CalculatedStatus.ABSENCE]: 'Falta',
                     [CalculatedStatus.EXTRA]: 'Extra (bônus)'
                   };
                   

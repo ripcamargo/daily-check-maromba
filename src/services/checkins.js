@@ -27,9 +27,10 @@ export const CheckinStatus = {
  * Status calculados automaticamente pelo sistema
  */
 export const CalculatedStatus = {
-  REST: 'rest',      // Ausência dentro do limite de folgas
-  ABSENCE: 'absence', // Ausência acima do limite (falta)
-  EXTRA: 'extra'      // Presença em data bônus
+  REST: 'rest',           // Ausência dentro do limite de folgas
+  ABSENCE: 'absence',     // Ausência acima do limite (falta)
+  EXTRA: 'extra',         // Presença em data bônus
+  BONUS_REST: 'bonus_rest' // Falta cancelada por vale-folga (estrela conquistada)
 };
 
 /**
@@ -94,7 +95,8 @@ export const StatusEmoji = {
   [CheckinStatus.JUSTIFIED]: '📄',
   [CalculatedStatus.REST]: '🔷',
   [CalculatedStatus.ABSENCE]: '❌',
-  [CalculatedStatus.EXTRA]: '⭐'
+  [CalculatedStatus.EXTRA]: '⭐',
+  [CalculatedStatus.BONUS_REST]: '🔶'
 };
 
 /**
@@ -108,7 +110,8 @@ export const StatusColor = {
   [CheckinStatus.JUSTIFIED]: '#6366f1',
   [CalculatedStatus.REST]: '#3b82f6',
   [CalculatedStatus.ABSENCE]: '#ef4444',
-  [CalculatedStatus.EXTRA]: '#eab308'
+  [CalculatedStatus.EXTRA]: '#eab308',
+  [CalculatedStatus.BONUS_REST]: '#f97316'
 };
 
 /**
@@ -165,6 +168,22 @@ export const countWeeklyAbsences = (weekCheckins, athleteId, bonusDates = []) =>
 };
 
 /**
+ * Retorna quantas estrelas (EXTRA) disponíveis um atleta tem antes de uma data,
+ * descontando as que já foram consumidas como BONUS_REST.
+ */
+const getAvailableStars = (priorCheckins, athleteId) => {
+  const sorted = [...priorCheckins].sort((a, b) => a.date.localeCompare(b.date));
+  let stars = 0;
+  for (const c of sorted) {
+    const data = c.athletes?.[athleteId];
+    if (!data) continue;
+    if (data.status === CalculatedStatus.EXTRA) stars++;
+    if (data.status === CalculatedStatus.BONUS_REST) stars--;
+  }
+  return Math.max(0, stars);
+};
+
+/**
  * Processa check-ins aplicando regras automáticas
  * @param {Object} season - Dados da temporada
  * @param {string} date - Data dos check-ins
@@ -172,42 +191,49 @@ export const countWeeklyAbsences = (weekCheckins, athleteId, bonusDates = []) =>
  */
 export const processCheckins = async (season, date, rawCheckins) => {
   try {
-    const weekStartsOn = season.weekStartsOn ?? 1; // Default segunda-feira
-    const weekCheckins = await getWeekCheckins(season.id, date, weekStartsOn);
+    const weekStartsOn = season.weekStartsOn ?? 1;
     const bonusDates = season.bonusDates || [];
     const isBonusDate = bonusDates.includes(date);
+    const bonusBenefit = season.bonusBenefit || '-';
+
+    const weekCheckins = await getWeekCheckins(season.id, date, weekStartsOn);
+
+    // Para vale-folga: busca todos os check-ins anteriores da temporada
+    let allPriorCheckins = [];
+    if (bonusBenefit === 'vale-folga') {
+      const all = await getAllCheckins(season.id);
+      allPriorCheckins = all.filter(c => c.date < date);
+    }
+
     const processedCheckins = {};
-    
-    // Para cada atleta
+
     for (const [athleteId, checkinData] of Object.entries(rawCheckins)) {
       const userStatus = checkinData.status;
-      
-      // Pula se não foi marcado
+
       if (userStatus === CheckinStatus.NOT_SET) {
         processedCheckins[athleteId] = { status: CheckinStatus.NOT_SET };
         continue;
       }
-      
-      // Conta ausências do atleta na semana (excluindo a data atual, datas futuras E datas bônus)
+
       const weekCheckinsExcludingToday = weekCheckins.filter(c => c.date !== date && c.date < date);
-      let absencesInWeek = countWeeklyAbsences(weekCheckinsExcludingToday, athleteId, bonusDates);
-      
-      // NÃO incrementa o contador aqui - a função calculateFinalStatus faz isso internamente
-      
-      // Calcula status final
-      const finalStatus = calculateFinalStatus(
-        userStatus,
-        isBonusDate,
-        absencesInWeek,
-        season.weeklyRestLimit
-      );
-      
-      processedCheckins[athleteId] = { 
+      const absencesInWeek = countWeeklyAbsences(weekCheckinsExcludingToday, athleteId, bonusDates);
+
+      let finalStatus = calculateFinalStatus(userStatus, isBonusDate, absencesInWeek, season.weeklyRestLimit);
+
+      // Vale-folga: se seria uma FALTA e o atleta tem estrela disponível, vira BONUS_REST
+      if (finalStatus === CalculatedStatus.ABSENCE && bonusBenefit === 'vale-folga') {
+        const availableStars = getAvailableStars(allPriorCheckins, athleteId);
+        if (availableStars > 0) {
+          finalStatus = CalculatedStatus.BONUS_REST;
+        }
+      }
+
+      processedCheckins[athleteId] = {
         status: finalStatus,
-        originalStatus: userStatus // Mantém o status original para edição
+        originalStatus: userStatus
       };
     }
-    
+
     return processedCheckins;
   } catch (error) {
     console.error('Erro ao processar check-ins:', error);
@@ -319,6 +345,9 @@ export const calculateAthleteStats = async (seasonId, athleteId) => {
           case CalculatedStatus.REST:
             stats.rest++;
             break;
+          case CalculatedStatus.BONUS_REST:
+            stats.rest++; // conta como folga para fins de ranking/multa
+            break;
           case CalculatedStatus.ABSENCE:
             stats.absence++;
             break;
@@ -410,6 +439,10 @@ export const calculateAthleteGlobalStats = async (athleteId) => {
             seasonStats.present++;
             break;
           case CalculatedStatus.REST:
+            stats.rest++;
+            seasonStats.rest++;
+            break;
+          case CalculatedStatus.BONUS_REST:
             stats.rest++;
             seasonStats.rest++;
             break;

@@ -20,18 +20,24 @@ export const calculateStats = (checkins, athleteId, bonusBenefit = '-') => {
     notSet: 0
   };
 
+  let hasBonusRest = false;
+
   checkins.forEach(checkin => {
     const athleteCheckin = checkin.athletes?.[athleteId];
     if (!athleteCheckin) return;
 
     const status = athleteCheckin.status;
-    
+
     switch (status) {
       case CheckinStatus.PRESENT:
         stats.present++;
         break;
       case CalculatedStatus.REST:
         stats.rest++;
+        break;
+      case CalculatedStatus.BONUS_REST:
+        stats.rest++; // vale-folga já aplicado no dado armazenado
+        hasBonusRest = true;
         break;
       case CalculatedStatus.ABSENCE:
         stats.absence++;
@@ -51,12 +57,12 @@ export const calculateStats = (checkins, athleteId, bonusBenefit = '-') => {
     }
   });
 
-  // Aplicar vale-folga: cada estrela anula uma falta
-  if (bonusBenefit === 'vale-folga' && stats.extra > 0 && stats.absence > 0) {
+  // Fallback para dados antigos (sem BONUS_REST salvo):
+  // aplica vale-folga nos totais quando não há nenhum BONUS_REST armazenado
+  if (bonusBenefit === 'vale-folga' && !hasBonusRest && stats.extra > 0 && stats.absence > 0) {
     const valeFolgasUsed = Math.min(stats.extra, stats.absence);
-    stats.absence -= valeFolgasUsed; // Reduz as faltas
-    stats.rest += valeFolgasUsed; // Converte faltas em folgas
-    // As estrelas não são consumidas, apenas aplicam o benefício
+    stats.absence -= valeFolgasUsed;
+    stats.rest += valeFolgasUsed;
   }
 
   console.log(`Stats para atleta ${athleteId} (bonusBenefit: ${bonusBenefit}):`, stats);
