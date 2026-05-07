@@ -177,6 +177,7 @@ export default function Dashboard() {
         const athlete = getAthleteById(athleteId);
         if (!athlete) return null;
 
+        const withdrawal = selectedSeason.withdrawals?.[athleteId];
         const stats = calculateStats(checkinsData, athleteId, selectedSeason.bonusBenefit);
         const fineInfo = calculateFine(
           stats,
@@ -197,7 +198,9 @@ export default function Dashboard() {
           stats,
           fineInfo,
           totalPaid,
-          debt: Math.max(0, fineInfo.fineAmount - totalPaid)
+          debt: Math.max(0, fineInfo.fineAmount - totalPaid),
+          withdrawn: !!withdrawal,
+          withdrawalDate: withdrawal?.date || null
         };
       }).filter(Boolean);
 
@@ -594,39 +597,57 @@ export default function Dashboard() {
                 <tbody>
                   {rankedAthletes.map((athlete, index) => {
                     const medalColors = ['#FFD700', '#C0C0C0', '#CD7F32'];
-                    const bgColor = index < 3 ? 'bg-yellow-50' : '';
-                    
+                    const activeCount = rankedAthletes.filter(a => !a.withdrawn).length;
+                    const activeIndex = index; // visual position
+                    const isTop3 = !athlete.withdrawn && index < 3;
+                    const bgColor = isTop3 ? 'bg-yellow-50' : athlete.withdrawn ? 'bg-gray-50 opacity-60' : '';
+
                     return (
                       <tr key={athlete.id} className={`border-b border-gray-100 ${bgColor}`}>
                         <td className="py-2 px-1 sm:py-4 sm:px-4">
-                          <div className="flex items-center justify-center w-6 h-6 sm:w-8 sm:h-8 rounded-full font-bold text-white text-xs sm:text-base" 
-                               style={{ backgroundColor: index < 3 ? medalColors[index] : '#6b7280' }}>
-                            {index + 1}
-                          </div>
+                          {athlete.withdrawn ? (
+                            <div className="flex items-center justify-center w-6 h-6 sm:w-8 sm:h-8 rounded-full font-bold text-white text-xs sm:text-base bg-gray-300">
+                              —
+                            </div>
+                          ) : (
+                            <div className="flex items-center justify-center w-6 h-6 sm:w-8 sm:h-8 rounded-full font-bold text-white text-xs sm:text-base"
+                                 style={{ backgroundColor: isTop3 ? medalColors[index] : '#6b7280' }}>
+                              {index + 1}
+                            </div>
+                          )}
                         </td>
                         <td className="py-2 px-1 sm:py-4 sm:px-4">
                           <div className="flex items-center gap-1 sm:gap-3">
-                            <Avatar name={athlete.name} photoUrl={athlete.photoUrl} size="sm" className="hidden sm:block" />
-                            <Avatar name={athlete.name} photoUrl={athlete.photoUrl} size="xs" className="sm:hidden" />
-                            <span className="font-bold text-gray-800 text-xs sm:text-base truncate max-w-[80px] sm:max-w-none">{athlete.name}</span>
+                            <Avatar name={athlete.name} photoUrl={athlete.photoUrl} size="sm" className="hidden sm:block" style={athlete.withdrawn ? { filter: 'grayscale(1)' } : {}} />
+                            <Avatar name={athlete.name} photoUrl={athlete.photoUrl} size="xs" className="sm:hidden" style={athlete.withdrawn ? { filter: 'grayscale(1)' } : {}} />
+                            <div className="flex flex-col">
+                              <span className={`font-bold text-xs sm:text-base truncate max-w-[80px] sm:max-w-none ${athlete.withdrawn ? 'text-gray-400 line-through' : 'text-gray-800'}`}>
+                                {athlete.name}
+                              </span>
+                              {athlete.withdrawn && (
+                                <span className="text-[10px] text-red-400 font-medium">
+                                  Desistiu em {athlete.withdrawalDate?.split('-').reverse().join('/')}
+                                </span>
+                              )}
+                            </div>
                           </div>
                         </td>
-                        <td className="py-2 px-1 sm:py-4 sm:px-2 text-center font-bold text-green-600 text-xs sm:text-base">
+                        <td className={`py-2 px-1 sm:py-4 sm:px-2 text-center font-bold text-xs sm:text-base ${athlete.withdrawn ? 'text-gray-400' : 'text-green-600'}`}>
                           {athlete.stats.present}
                         </td>
-                        <td className="py-2 px-1 sm:py-4 sm:px-2 text-center font-bold text-red-600 text-xs sm:text-base">
+                        <td className={`py-2 px-1 sm:py-4 sm:px-2 text-center font-bold text-xs sm:text-base ${athlete.withdrawn ? 'text-gray-400' : 'text-red-600'}`}>
                           {athlete.stats.absence}
                         </td>
-                        <td className="py-2 px-1 sm:py-4 sm:px-2 text-center font-bold text-xs sm:text-base" style={{ color: primary }}>
+                        <td className="py-2 px-1 sm:py-4 sm:px-2 text-center font-bold text-xs sm:text-base" style={{ color: athlete.withdrawn ? '#9ca3af' : primary }}>
                           {athlete.stats.rest}
                         </td>
-                        <td className="py-2 px-1 sm:py-4 sm:px-2 text-center font-bold text-indigo-600 text-xs sm:text-base">
+                        <td className={`py-2 px-1 sm:py-4 sm:px-2 text-center font-bold text-xs sm:text-base ${athlete.withdrawn ? 'text-gray-400' : 'text-indigo-600'}`}>
                           {athlete.stats.justified}
                         </td>
-                        <td className="py-2 px-1 sm:py-4 sm:px-2 text-center font-bold text-orange-600 text-xs sm:text-base">
+                        <td className={`py-2 px-1 sm:py-4 sm:px-2 text-center font-bold text-xs sm:text-base ${athlete.withdrawn ? 'text-gray-400' : 'text-orange-600'}`}>
                           {athlete.stats.hospital}
                         </td>
-                        <td className="py-2 px-1 sm:py-4 sm:px-2 text-center font-bold text-yellow-600 text-xs sm:text-base">
+                        <td className={`py-2 px-1 sm:py-4 sm:px-2 text-center font-bold text-xs sm:text-base ${athlete.withdrawn ? 'text-gray-400' : 'text-yellow-600'}`}>
                           {athlete.stats.extra}
                         </td>
                       </tr>
@@ -652,11 +673,11 @@ export default function Dashboard() {
             </div>
           </Card>
 
-          {/* Mini Rankings */}
+          {/* Mini Rankings — exclui desistentes */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-6">
             <Card title="🛌 Quem Descansou Mais">
               <div className="space-y-3">
-                {sortByMostRest(rankingData).slice(0, 5).map((athlete, index) => (
+                {sortByMostRest(rankingData.filter(a => !a.withdrawn)).slice(0, 5).map((athlete, index) => (
                   <div key={athlete.id} className="flex items-center gap-3 p-2 bg-gray-50 rounded-lg">
                     <span className="font-bold text-gray-600 w-6">{index + 1}º</span>
                     <Avatar name={athlete.name} photoUrl={athlete.photoUrl} size="sm" />
@@ -669,7 +690,7 @@ export default function Dashboard() {
 
             <Card title="❌ Quem Faltou Mais">
               <div className="space-y-3">
-                {sortByMostAbsence(rankingData).slice(0, 5).map((athlete, index) => (
+                {sortByMostAbsence(rankingData.filter(a => !a.withdrawn)).slice(0, 5).map((athlete, index) => (
                   <div key={athlete.id} className="flex items-center gap-3 p-2 bg-gray-50 rounded-lg">
                     <span className="font-bold text-gray-600 w-6">{index + 1}º</span>
                     <Avatar name={athlete.name} photoUrl={athlete.photoUrl} size="sm" />
@@ -682,7 +703,7 @@ export default function Dashboard() {
 
             <Card title="🏥 Quem Foi Mais ao Hospital">
               <div className="space-y-3">
-                {sortByMostHospital(rankingData).slice(0, 5).map((athlete, index) => (
+                {sortByMostHospital(rankingData.filter(a => !a.withdrawn)).slice(0, 5).map((athlete, index) => (
                   <div key={athlete.id} className="flex items-center gap-3 p-2 bg-gray-50 rounded-lg">
                     <span className="font-bold text-gray-600 w-6">{index + 1}º</span>
                     <Avatar name={athlete.name} photoUrl={athlete.photoUrl} size="sm" />

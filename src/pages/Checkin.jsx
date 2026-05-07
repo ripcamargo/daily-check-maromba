@@ -88,7 +88,6 @@ export default function Checkin() {
   };
 
   const handleClear = () => {
-    // Limpa todos os check-ins do dia (marca todos como NOT_SET)
     const clearedCheckins = {};
     currentSeason.participants?.forEach(athleteId => {
       clearedCheckins[athleteId] = { status: CheckinStatus.NOT_SET };
@@ -162,8 +161,14 @@ export default function Checkin() {
     );
   }
 
-  const participants = currentSeason.participants || [];
-  
+  const allParticipants = currentSeason.participants || [];
+  // Exclui atletas que desistiram antes ou na data selecionada
+  const participants = allParticipants.filter(athleteId => {
+    const withdrawal = currentSeason.withdrawals?.[athleteId];
+    if (!withdrawal) return true;
+    return selectedDate < withdrawal.date;
+  });
+
   // Status que o usuário pode marcar manualmente
   const statusOptions = [
     { value: CheckinStatus.PRESENT, emoji: StatusEmoji[CheckinStatus.PRESENT], label: 'Presente' },

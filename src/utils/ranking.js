@@ -1,8 +1,14 @@
 /**
- * Ordena atletas por ranking seguindo os critérios de desempate
+ * Ordena atletas por ranking seguindo os critérios de desempate.
+ * Atletas com withdrawn=true são sempre jogados para as últimas posições.
  */
 export const sortByRanking = (athletes) => {
   return [...athletes].sort((a, b) => {
+    // Desistentes sempre vão para o final
+    if (a.withdrawn && !b.withdrawn) return 1;
+    if (!a.withdrawn && b.withdrawn) return -1;
+    if (a.withdrawn && b.withdrawn) return 0;
+
     // 1. Maior número de presenças
     if (b.stats.present !== a.stats.present) {
       return b.stats.present - a.stats.present;

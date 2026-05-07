@@ -1,14 +1,15 @@
-import { 
-  collection, 
-  addDoc, 
-  updateDoc, 
-  deleteDoc, 
-  doc, 
-  getDocs, 
+import {
+  collection,
+  addDoc,
+  updateDoc,
+  deleteDoc,
+  doc,
+  getDocs,
   getDoc,
   query,
   orderBy,
-  where
+  where,
+  deleteField
 } from 'firebase/firestore';
 import { db } from './firebase';
 
@@ -246,6 +247,40 @@ export const getAthleteTitles = async (athleteId) => {
   } catch (error) {
     console.error('Erro ao buscar títulos do atleta:', error);
     return [];
+  }
+};
+
+/**
+ * Registra a desistência de um atleta na temporada
+ * A partir da data informada, o atleta deixa de aparecer no check-in
+ */
+export const withdrawAthlete = async (seasonId, athleteId, withdrawalDate) => {
+  try {
+    const seasonRef = doc(db, COLLECTION_NAME, seasonId);
+    await updateDoc(seasonRef, {
+      [`withdrawals.${athleteId}`]: {
+        date: withdrawalDate,
+        registeredAt: new Date()
+      }
+    });
+  } catch (error) {
+    console.error('Erro ao registrar desistência:', error);
+    throw error;
+  }
+};
+
+/**
+ * Desfaz a desistência de um atleta na temporada
+ */
+export const undoWithdrawal = async (seasonId, athleteId) => {
+  try {
+    const seasonRef = doc(db, COLLECTION_NAME, seasonId);
+    await updateDoc(seasonRef, {
+      [`withdrawals.${athleteId}`]: deleteField()
+    });
+  } catch (error) {
+    console.error('Erro ao desfazer desistência:', error);
+    throw error;
   }
 };
 

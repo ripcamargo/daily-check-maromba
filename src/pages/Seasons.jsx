@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Plus, Settings, CheckCircle, Calendar as CalendarIcon, RefreshCw, Eye, Trash2, Trophy, Award } from 'lucide-react';
+import { Plus, Settings, CheckCircle, Calendar as CalendarIcon, RefreshCw, Eye, Trash2, Trophy, Award, UserX, RotateCcw } from 'lucide-react';
 import { Card } from '../components/Card';
 import { Button } from '../components/Button';
 import { Modal } from '../components/Modal';
@@ -10,13 +10,15 @@ import { useAthletes } from '../context/AthletesContext';
 import { useSeason } from '../context/SeasonContext';
 import { useThemeColor } from '../context/ThemeColorContext';
 import { useAuth } from '../context/AuthContext';
-import { 
-  createSeason, 
-  updateSeason, 
+import {
+  createSeason,
+  updateSeason,
   uploadSeasonLogo,
   getAllSeasons,
   finalizeSeason,
   deleteSeason,
+  withdrawAthlete,
+  undoWithdrawal,
   DEFAULT_XP_CONFIG
 } from '../services/seasons';
 import { getAllCheckins, processCheckins, saveCheckins, CheckinStatus } from '../services/checkins';
@@ -51,6 +53,8 @@ export default function Seasons() {
   const [uploading, setUploading] = useState(false);
   const [reprocessing, setReprocessing] = useState(false);
   const [importFromSeasonId, setImportFromSeasonId] = useState('');
+  const [withdrawalModal, setWithdrawalModal] = useState({ open: false, athleteId: null, athleteName: '' });
+  const [withdrawalDate, setWithdrawalDate] = useState('');
   const [formData, setFormData] = useState({
     title: '',
     startDate: '',
@@ -380,6 +384,42 @@ export default function Seasons() {
         ? prev.participants.filter(id => id !== athleteId)
         : [...prev.participants, athleteId]
     }));
+  };
+
+  const handleOpenWithdrawalModal = (athleteId, athleteName) => {
+    const today = new Date();
+    const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+    setWithdrawalDate(todayStr);
+    setWithdrawalModal({ open: true, athleteId, athleteName });
+  };
+
+  const handleConfirmWithdrawal = async () => {
+    if (!withdrawalDate || !withdrawalModal.athleteId || !currentSeason) return;
+    try {
+      setUploading(true);
+      await withdrawAthlete(currentSeason.id, withdrawalModal.athleteId, withdrawalDate);
+      await refreshSeason();
+      setWithdrawalModal({ open: false, athleteId: null, athleteName: '' });
+      setAlert({ type: 'success', message: `Desistência de ${withdrawalModal.athleteName} registrada!` });
+    } catch (error) {
+      setAlert({ type: 'error', message: `Erro ao registrar desistência: ${error.message}` });
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  const handleUndoWithdrawal = async (athleteId, athleteName) => {
+    if (!window.confirm(`Desfazer a desistência de ${athleteName}?`)) return;
+    try {
+      setUploading(true);
+      await undoWithdrawal(currentSeason.id, athleteId);
+      await refreshSeason();
+      setAlert({ type: 'success', message: `Desistência de ${athleteName} desfeita!` });
+    } catch (error) {
+      setAlert({ type: 'error', message: `Erro ao desfazer desistência: ${error.message}` });
+    } finally {
+      setUploading(false);
+    }
   };
 
   const handleReprocessCheckins = async () => {
@@ -964,19 +1004,56 @@ export default function Seasons() {
             <label className="block text-sm font-medium text-gray-700 mb-3">
               Participantes
             </label>
-            <div className="max-h-60 overflow-y-auto border rounded-lg p-4 space-y-2">
-              {athletes.map((athlete) => (
-                <label key={athlete.id} className="flex items-center gap-3 p-2 hover:bg-gray-50 rounded cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={formData.participants.includes(athlete.id)}
-                    onChange={() => handleParticipantToggle(athlete.id)}
-                    className="w-5 h-5"
-                    style={{ accentColor: primary }}
-                  />
-                  <span className="font-medium">{athlete.name}</span>
-                </label>
-              ))}
+            <div className="max-h-72 overflow-y-auto border rounded-lg p-4 space-y-2">
+              {athletes.map((athlete) => {
+                const withdrawal = currentSeason?.withdrawals?.[athlete.id];
+                const isParticipant = formData.participants.includes(athlete.id);
+                return (
+                  <div
+                    key={athlete.id}
+                    className={`flex items-center gap-3 p-2 rounded ${withdrawal ? 'bg-red-50' : 'hover:bg-gray-50'}`}
+                  >
+                    <label className="flex items-center gap-3 flex-1 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={isParticipant}
+                        onChange={() => handleParticipantToggle(athlete.id)}
+                        className="w-5 h-5"
+                        style={{ accentColor: primary }}
+                      />
+                      <span className={`font-medium ${withdrawal ? 'text-gray-400 line-through' : ''}`}>
+                        {athlete.name}
+                      </span>
+                      {withdrawal && (
+                        <span className="text-xs text-red-500 font-semibold ml-1">
+                          Desistiu em {withdrawal.date.split('-').reverse().join('/')}
+                        </span>
+                      )}
+                    </label>
+                    {isParticipant && isAdmin && (
+                      withdrawal ? (
+                        <button
+                          type="button"
+                          onClick={() => handleUndoWithdrawal(athlete.id, athlete.name)}
+                          title="Desfazer desistência"
+                          className="p-1.5 rounded-lg text-gray-500 hover:text-green-600 hover:bg-green-50 transition-colors"
+                        >
+                          <RotateCcw className="w-4 h-4" />
+                        </button>
+                      ) : (
+                        <button
+                          type="button"
+                          onClick={() => handleOpenWithdrawalModal(athlete.id, athlete.name)}
+                          title="Registrar desistência"
+                          className="p-1.5 rounded-lg text-gray-500 hover:text-red-600 hover:bg-red-50 transition-colors"
+                        >
+                          <UserX className="w-4 h-4" />
+                        </button>
+                      )
+                    )}
+                  </div>
+                );
+              })}
             </div>
           </div>
 
@@ -1281,6 +1358,57 @@ export default function Seasons() {
         )}
       </Modal>
       </div>
+
+      {/* Modal Desistência */}
+      {withdrawalModal.open && (
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/50 px-4">
+          <div className="bg-white rounded-xl shadow-2xl p-6 w-full max-w-sm">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="p-2 bg-red-100 rounded-lg">
+                <UserX className="w-5 h-5 text-red-600" />
+              </div>
+              <div>
+                <h3 className="font-bold text-gray-800">Registrar Desistência</h3>
+                <p className="text-sm text-gray-500">{withdrawalModal.athleteName}</p>
+              </div>
+            </div>
+            <p className="text-sm text-gray-600 mb-4">
+              A partir desta data, o atleta não aparecerá mais no check-in. Os dados anteriores serão mantidos e o nome ficará destacado nas últimas posições do ranking.
+            </p>
+            <div className="mb-5">
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Data da Desistência
+              </label>
+              <input
+                type="date"
+                value={withdrawalDate}
+                onChange={(e) => setWithdrawalDate(e.target.value)}
+                min={currentSeason ? formatDate(currentSeason.startDate, 'yyyy-MM-dd') : ''}
+                max={currentSeason ? formatDate(currentSeason.endDate, 'yyyy-MM-dd') : ''}
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-400"
+              />
+            </div>
+            <div className="flex gap-3 justify-end">
+              <Button
+                type="button"
+                variant="secondary"
+                onClick={() => setWithdrawalModal({ open: false, athleteId: null, athleteName: '' })}
+              >
+                Cancelar
+              </Button>
+              <button
+                type="button"
+                onClick={handleConfirmWithdrawal}
+                disabled={uploading || !withdrawalDate}
+                className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg font-medium transition-colors disabled:opacity-50 flex items-center gap-2"
+              >
+                <UserX className="w-4 h-4" />
+                {uploading ? 'Salvando...' : 'Confirmar Desistência'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </>
   );
 }

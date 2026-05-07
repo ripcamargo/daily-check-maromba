@@ -432,20 +432,32 @@ export const generateRankingImage = async (season, rankedAthletes, allCheckins) 
     '#06b6d4','#84cc16','#f59e0b','#6366f1','#ef4444',
   ];
 
+  // Count active (non-withdrawn) athletes for position numbering
+  let activePosition = 0;
+
   for (let i = 0; i < rankedAthletes.length; i++) {
     const athlete = rankedAthletes[i];
+    const isWithdrawn = !!athlete.withdrawn;
     const rowY = ROWS_Y + i * ROW_H;
     const midY = rowY + ROW_H / 2;
 
-    // Alternating background
-    ctx.fillStyle = i % 2 === 0 ? 'rgba(255,255,255,0.025)' : 'rgba(0,0,0,0)';
+    if (!isWithdrawn) activePosition++;
+    const displayPos = isWithdrawn ? null : activePosition;
+    const isTop3 = !isWithdrawn && activePosition <= 3;
+
+    // Alternating background — desistentes recebem fundo diferenciado
+    if (isWithdrawn) {
+      ctx.fillStyle = 'rgba(0,0,0,0.18)';
+    } else {
+      ctx.fillStyle = i % 2 === 0 ? 'rgba(255,255,255,0.025)' : 'rgba(0,0,0,0)';
+    }
     ctx.fillRect(0, rowY, W, ROW_H);
 
-    // Top-3 highlight + left accent bar (medal color, no orange)
-    if (i < 3) {
-      ctx.fillStyle = `${MEDAL[i]}18`;
+    // Top-3 highlight + left accent bar
+    if (isTop3) {
+      ctx.fillStyle = `${MEDAL[activePosition - 1]}18`;
       ctx.fillRect(0, rowY, W, ROW_H);
-      ctx.fillStyle = MEDAL[i];
+      ctx.fillStyle = MEDAL[activePosition - 1];
       ctx.fillRect(0, rowY, 4, ROW_H);
     }
 
@@ -456,43 +468,63 @@ export const generateRankingImage = async (season, rankedAthletes, allCheckins) 
 
     // Position badge
     const posR = 16;
-    ctx.fillStyle = i < 3 ? MEDAL[i] : '#1e3a5f';
-    ctx.beginPath(); ctx.arc(POS_CX, midY, posR, 0, Math.PI * 2); ctx.fill();
-    ctx.fillStyle = i < 3 ? '#0f172a' : '#94a3b8';
-    ctx.font = 'bold 13px Inter';
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
-    ctx.fillText(String(i + 1), POS_CX, midY + 1);
+    if (isWithdrawn) {
+      ctx.fillStyle = '#374151';
+      ctx.beginPath(); ctx.arc(POS_CX, midY, posR, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = '#6b7280';
+      ctx.font = 'bold 13px Inter';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText('—', POS_CX, midY + 1);
+    } else {
+      ctx.fillStyle = isTop3 ? MEDAL[activePosition - 1] : '#1e3a5f';
+      ctx.beginPath(); ctx.arc(POS_CX, midY, posR, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = isTop3 ? '#0f172a' : '#94a3b8';
+      ctx.font = 'bold 13px Inter';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(String(displayPos), POS_CX, midY + 1);
+    }
 
-    // Photo — no ring/border on anyone
+    // Photo — grayscale for withdrawn via globalAlpha
     const photoR = 22;
+    if (isWithdrawn) ctx.globalAlpha = 0.35;
     if (photos[athlete.id]) {
       clipCircle(PHOTO_CX, midY, photoR, () => {
         ctx.drawImage(photos[athlete.id], PHOTO_CX - photoR, midY - photoR, photoR * 2, photoR * 2);
       });
     } else {
-      drawInitials(athlete.name, PHOTO_CX, midY, photoR, AVATAR_COLORS[i % AVATAR_COLORS.length]);
+      drawInitials(athlete.name, PHOTO_CX, midY, photoR, isWithdrawn ? '#4b5563' : AVATAR_COLORS[i % AVATAR_COLORS.length]);
     }
+    if (isWithdrawn) ctx.globalAlpha = 1;
 
     // Athlete name
-    ctx.fillStyle = '#f1f5f9';
-    ctx.font = 'bold 16px Inter';
+    ctx.fillStyle = isWithdrawn ? '#4b5563' : '#f1f5f9';
+    ctx.font = isWithdrawn ? '16px Inter' : 'bold 16px Inter';
     ctx.textAlign = 'left';
     ctx.textBaseline = 'middle';
-    ctx.fillText(abbreviateName(athlete.name), NAME_X, midY + 1, NAME_MAX);
+    ctx.fillText(abbreviateName(athlete.name), NAME_X, isWithdrawn ? midY - 7 : midY + 1, NAME_MAX);
+
+    // "DESISTIU" label for withdrawn
+    if (isWithdrawn) {
+      ctx.fillStyle = '#ef4444';
+      ctx.font = 'bold 9px Inter';
+      ctx.textAlign = 'left';
+      ctx.fillText('DESISTIU', NAME_X, midY + 8);
+    }
 
     // Stats columns
     ctx.font = 'bold 18px Inter';
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
 
-    ctx.fillStyle = '#4ade80';
+    ctx.fillStyle = isWithdrawn ? '#374151' : '#4ade80';
     ctx.fillText(String(athlete.stats?.present ?? 0), PRES_CX, midY + 1);
 
-    ctx.fillStyle = '#f87171';
+    ctx.fillStyle = isWithdrawn ? '#374151' : '#f87171';
     ctx.fillText(String(athlete.stats?.absence ?? 0), FALT_CX, midY + 1);
 
-    ctx.fillStyle = '#60a5fa';
+    ctx.fillStyle = isWithdrawn ? '#374151' : '#60a5fa';
     ctx.fillText(String(athlete.stats?.rest ?? 0), DESC_CX, midY + 1);
 
     // Last-5 circles: j=0..3 small (oldest→recent), j=4 large (newest, highlighted)
@@ -509,22 +541,27 @@ export const generateRankingImage = async (season, rankedAthletes, allCheckins) 
       const cx = isNewest ? LARGE_CX : SMALL_CXS[j];
 
       // White highlight ring behind the newest circle
-      if (isNewest && session) {
+      if (isNewest && session && !isWithdrawn) {
         ctx.strokeStyle = 'rgba(255,255,255,0.75)';
         ctx.lineWidth = 2.5;
         ctx.beginPath(); ctx.arc(cx, midY, r + 4, 0, Math.PI * 2); ctx.stroke();
       }
 
-      ctx.fillStyle = STATUS_BG[status] ?? STATUS_BG[CheckinStatus.NOT_SET];
+      const circleBg = isWithdrawn
+        ? 'rgba(55,65,81,0.4)'
+        : (STATUS_BG[status] ?? STATUS_BG[CheckinStatus.NOT_SET]);
+      ctx.fillStyle = circleBg;
       ctx.beginPath(); ctx.arc(cx, midY, r, 0, Math.PI * 2); ctx.fill();
 
-      const sym = STATUS_SYM[status];
-      if (sym) {
-        ctx.fillStyle = '#ffffff';
-        ctx.font = `bold ${isNewest ? 15 : 12}px Inter`;
-        ctx.textAlign = 'center';
-        ctx.textBaseline = 'middle';
-        ctx.fillText(sym, cx, midY + 1);
+      if (!isWithdrawn) {
+        const sym = STATUS_SYM[status];
+        if (sym) {
+          ctx.fillStyle = '#ffffff';
+          ctx.font = `bold ${isNewest ? 15 : 12}px Inter`;
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+          ctx.fillText(sym, cx, midY + 1);
+        }
       }
     }
   }
