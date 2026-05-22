@@ -66,6 +66,15 @@ export default function Dashboard() {
     }
   }, [currentSeason, athletes]);
 
+  // Quando não há temporada ativa, auto-seleciona a mais recente
+  useEffect(() => {
+    if (!currentSeason && !selectedSeasonId && allSeasons.length > 0) {
+      const latest = allSeasons[0]; // já vem ordenado por startDate desc
+      setSelectedSeasonId(latest.id);
+      loadDashboardData(latest.id);
+    }
+  }, [allSeasons, currentSeason]);
+
   useEffect(() => {
     applyDateFilter();
   }, [startDate, endDate, checkins]);
@@ -217,7 +226,9 @@ export default function Dashboard() {
     return <Loading text="Carregando dashboard..." />;
   }
 
-  if (!currentSeason) {
+  const selectedSeason = allSeasons.find(s => s.id === selectedSeasonId) || currentSeason;
+
+  if (!selectedSeason) {
     return (
       <div className="container mx-auto px-4 py-8">
         <Card>
@@ -240,14 +251,13 @@ export default function Dashboard() {
   const totalExpected = financialData.reduce((sum, a) => sum + a.fineInfo.fineAmount, 0);
   const totalPaid = financialData.reduce((sum, a) => sum + a.totalPaid, 0);
   const totalDebt = totalExpected - totalPaid;
-  const selectedSeason = allSeasons.find(s => s.id === selectedSeasonId) || currentSeason;
 
   const handleGenerateRankingImage = async () => {
     try {
       setGeneratingImage(true);
       const sorted = sortByRanking(rankingData);
-      const blob = await generateRankingImage(currentSeason, sorted, checkins);
-      downloadWeeklyImage(blob, `${currentSeason.title}_classificacao`);
+      const blob = await generateRankingImage(selectedSeason, sorted, checkins);
+      downloadWeeklyImage(blob, `${selectedSeason.title}_classificacao`);
       setAlert({ type: 'success', message: 'Imagem de classificação baixada com sucesso!' });
     } catch (error) {
       setAlert({ type: 'error', message: `Erro ao gerar imagem: ${error.message}` });
@@ -267,34 +277,34 @@ export default function Dashboard() {
       
       // Calcular início e fim da semana baseado na data selecionada
       const selectedDate = parseISO(imageDate);
-      const weekStartsOn = currentSeason?.weekStartsOn || 1; // 1 = segunda-feira
+      const weekStartsOn = selectedSeason?.weekStartsOn || 1; // 1 = segunda-feira
       const weekStart = startOfWeek(selectedDate, { weekStartsOn });
       const weekEnd = endOfWeek(selectedDate, { weekStartsOn });
-      
+
       const weekStartDate = format(weekStart, 'yyyy-MM-dd');
       const weekEndDate = format(weekEnd, 'yyyy-MM-dd');
-      
+
       // Filtrar apenas atletas participantes da temporada
-      const participantAthletes = athletes.filter(athlete => 
-        currentSeason.participants?.includes(athlete.id)
+      const participantAthletes = athletes.filter(athlete =>
+        selectedSeason.participants?.includes(athlete.id)
       );
 
       // Usar background da temporada se existir
-      const backgroundUrl = currentSeason.backgroundUrl || null;
+      const backgroundUrl = selectedSeason.backgroundUrl || null;
 
       const blob = await generateWeeklyImage(
-        currentSeason, 
-        participantAthletes, 
+        selectedSeason,
+        participantAthletes,
         backgroundUrl,
         weekStartDate,
         weekEndDate
       );
-      
+
       if (shouldShare) {
-        await shareWeeklyImage(blob, currentSeason.title);
+        await shareWeeklyImage(blob, selectedSeason.title);
         setAlert({ type: 'success', message: 'Imagem gerada com sucesso!' });
       } else {
-        downloadWeeklyImage(blob, currentSeason.title);
+        downloadWeeklyImage(blob, selectedSeason.title);
         setAlert({ type: 'success', message: 'Imagem baixada com sucesso!' });
       }
     } catch (error) {
@@ -355,7 +365,7 @@ export default function Dashboard() {
       XLSX.utils.book_append_sheet(wb, ws, 'Log de Presença');
 
       // Gerar nome do arquivo
-      const fileName = `log-presenca-${currentSeason.title.replace(/\s+/g, '-')}-${format(new Date(), 'yyyy-MM-dd')}.xlsx`;
+      const fileName = `log-presenca-${selectedSeason.title.replace(/\s+/g, '-')}-${format(new Date(), 'yyyy-MM-dd')}.xlsx`;
 
       // Fazer download
       XLSX.writeFile(wb, fileName);
@@ -492,6 +502,13 @@ export default function Dashboard() {
         </div>
       )}
 
+      {selectedSeason.id !== currentSeason?.id && (
+        <div className="mb-4 flex items-center gap-2 bg-amber-50 border border-amber-200 rounded-lg px-4 py-3 text-sm text-amber-800">
+          <Calendar className="w-4 h-4 flex-shrink-0" />
+          <span>Visualizando temporada encerrada: <strong>{selectedSeason.title}</strong></span>
+        </div>
+      )}
+
       {/* Cards de Resumo */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-6 mb-6 sm:mb-8">
         <Card className="bg-gradient-to-br from-blue-50 to-blue-100">
@@ -502,7 +519,7 @@ export default function Dashboard() {
             <div className="text-center sm:text-left">
               <p className="text-xs sm:text-sm text-gray-600">Participantes</p>
               <p className="text-xl sm:text-2xl font-bold text-gray-800">
-                {currentSeason.participants?.length || 0}
+                {selectedSeason.participants?.length || 0}
               </p>
             </div>
           </div>

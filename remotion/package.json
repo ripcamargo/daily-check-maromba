@@ -1,0 +1,21 @@
+{
+  "name": "gym-wrapped-remotion",
+  "version": "1.0.0",
+  "description": "Gym Wrapped video renderer",
+  "scripts": {
+    "studio": "remotion studio src/index.jsx",
+    "render": "remotion render src/index.jsx GymWrapped out/gym-wrapped.mp4 --codec=h264",
+    "render:hq": "remotion render src/index.jsx GymWrapped out/gym-wrapped.mp4 --codec=h264 --crf=18"
+  },
+  "dependencies": {
+    "@remotion/cli": "4.0.288",
+    "@remotion/google-fonts": "4.0.288",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "remotion": "4.0.288"
+  },
+  "devDependencies": {
+    "@types/react": "^18.2.43",
+    "@types/react-dom": "^18.2.17"
+  }
+}

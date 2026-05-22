@@ -1,13 +1,14 @@
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { 
-  Home, 
-  Users, 
+import {
+  Home,
+  Users,
   Calendar,
   CheckSquare,
   DollarSign,
   Dumbbell,
   LogIn,
-  LogOut
+  LogOut,
+  Film
 } from 'lucide-react';
 import { useSeason } from '../context/SeasonContext';
 import { useSeasonColors } from '../hooks/useSeasonColors';
@@ -25,7 +26,8 @@ export const Navbar = () => {
     { path: '/atletas', label: 'Atletas', icon: Users },
     { path: '/temporadas', label: 'Temporadas', icon: Calendar },
     { path: '/checkin', label: 'Check-in', icon: CheckSquare },
-    { path: '/pagamentos', label: 'Pagamentos', icon: DollarSign }
+    { path: '/pagamentos', label: 'Pagamentos', icon: DollarSign },
+    ...(isAdmin ? [{ path: '/gym-wrapped', label: 'Gym Wrapped', icon: Film }] : [])
   ];
 
   const handleLogout = async () => {
