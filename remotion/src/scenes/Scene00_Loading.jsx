@@ -41,7 +41,7 @@ export const Scene00_Loading = () => {
             letterSpacing: 8,
           }}
         >
-          GYM WRAPPED
+          Retrospectiva Alumaromba
         </div>
         <div
           style={{

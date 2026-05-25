@@ -45,7 +45,7 @@ export const Scene08_Desistentes = ({ data }) => {
       <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 4, background: 'linear-gradient(90deg, #6366f1, #8b5cf6)' }} />
 
       <div style={{ opacity: titleOpacity, textAlign: 'center', marginBottom: 44 }}>
-        <div style={{ fontSize: 56 }}>🚪</div>
+        <div style={{ fontSize: 56 }}>⚰️</div>
         <div style={{
           fontFamily: 'Bebas Neue, Impact, sans-serif',
           fontSize: 60,
@@ -54,7 +54,7 @@ export const Scene08_Desistentes = ({ data }) => {
           lineHeight: 1,
           marginTop: 8,
         }}>
-          OS QUE PARTIRAM
+          DESISTENTES
         </div>
         <div style={{
           fontFamily: 'Inter, system-ui',
@@ -105,7 +105,7 @@ export const Scene08_Desistentes = ({ data }) => {
                   color: 'rgba(255,255,255,0.35)',
                   marginTop: 6,
                 }}>
-                  Desistiu em {formatDate(w.date)}
+                  
                 </div>
               </div>
               <div style={{
@@ -114,7 +114,7 @@ export const Scene08_Desistentes = ({ data }) => {
                 color: 'rgba(139,92,246,0.7)',
                 fontStyle: 'italic',
               }}>
-                Coragem para admitir.
+                Desistiu em {formatDate(w.date)}
               </div>
             </div>
           );
@@ -130,7 +130,7 @@ export const Scene08_Desistentes = ({ data }) => {
         fontStyle: 'italic',
         textAlign: 'center',
       }}>
-        "Respeito duvidoso. Honestidade indiscutível."
+        "Nossas referências do que não fazer... Melhorem!"
       </div>
     </AbsoluteFill>
   );

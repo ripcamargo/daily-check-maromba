@@ -10,13 +10,15 @@ function getEncerramentoFrase(pct) {
 const formatDate = (d) => {
   if (!d) return '';
   try {
-    return new Date(d + 'T00:00:00').toLocaleDateString('pt-BR', { day: '2-digit', month: 'long', year: 'numeric' });
-  } catch { return d; }
+    const dateStr = String(d).substring(0, 10);
+    return new Date(dateStr + 'T00:00:00').toLocaleDateString('pt-BR', { day: '2-digit', month: 'long', year: 'numeric' });
+  } catch { return String(d); }
 };
 
 export const Scene14_Encerramento = ({ data }) => {
   const frame = useCurrentFrame();
   const { season, groupStats } = data;
+  const { totalDias, presencaGeralPct } = groupStats;
 
   const bgOpacity = interpolate(frame, [0, 20], [0, 1], { extrapolateLeft: 'clamp', extrapolateRight: 'clamp' });
 
@@ -90,9 +92,9 @@ export const Scene14_Encerramento = ({ data }) => {
       }}>
         {[
           { label: 'ATLETAS', value: groupStats.totalAtletas, color: '#8b5cf6' },
-          { label: 'DIAS', value: groupStats.totalDias, color: '#3b82f6' },
+          { label: 'DIAS', value: totalDias, color: '#3b82f6' },
           { label: 'PRESENÇAS', value: groupStats.totalPresencas, color: '#10b981' },
-          { label: 'PRESENÇA', value: `${groupStats.presencaGeralPct}%`, color: '#f5a623' },
+          { label: 'PRESENÇA', value: `${presencaGeralPct}%`, color: '#f5a623' },
         ].map((s, i) => (
           <div key={s.label} style={{
             padding: '24px 36px',
@@ -134,7 +136,7 @@ export const Scene14_Encerramento = ({ data }) => {
           fontStyle: 'italic',
           lineHeight: 1.4,
         }}>
-          "{getEncerramentoFrase(groupStats.presencaGeralPct)}"
+          "{getEncerramentoFrase(presencaGeralPct)}"
         </div>
       </div>
 
@@ -151,7 +153,7 @@ export const Scene14_Encerramento = ({ data }) => {
           color: 'rgba(255,255,255,0.2)',
           letterSpacing: 4,
         }}>
-          GYM WRAPPED · {season.title}
+          Retrospectiva · {season.title}
         </div>
         <div style={{
           fontFamily: 'Inter, system-ui',

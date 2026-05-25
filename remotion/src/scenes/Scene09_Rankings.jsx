@@ -159,7 +159,7 @@ export const Scene09_Rankings = ({ data }) => {
         letterSpacing: 4,
         textAlign: 'center',
       }}>
-        {ranked[ranked.length - 1]?.name?.toUpperCase()} SABE O QUE PRECISA FAZER.
+        {/*{ranked[ranked.length - 1]?.name?.toUpperCase()} SABE O QUE PRECISA FAZER. */}
       </div>
     </AbsoluteFill>
   );

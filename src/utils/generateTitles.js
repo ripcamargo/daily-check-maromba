@@ -21,8 +21,14 @@ export function generateTitles(athletesWithStats, rankedAthletes, season) {
   assign(champ, 'CAMPEÃO DA TEMPORADA');
   assign(runner, 'PRATA DA CASA');
 
-  // Desistentes
-  athletesWithStats.filter((a) => a.withdrawn).forEach((a) => assign(a, 'DESISTENTE CORAJOSO'));
+  // Desistentes — título varia conforme presenças antes de desistir
+  const getTituloDesistente = (presencas) => {
+    if (presencas >= 45) return 'QUASE CHEGOU LÁ';
+    if (presencas >= 42) return 'DESISTENTE CORAJOSO';
+    if (presencas >= 20) return 'TENTOU, VALEU';
+    return 'APARECEU E SUMIU';
+  };
+  athletesWithStats.filter((a) => a.withdrawn).forEach((a) => assign(a, getTituloDesistente(a.stats.present)));
 
   // Zero presenças
   const ghost = athletesWithStats.find((a) => a.stats.present === 0 && !a.withdrawn);

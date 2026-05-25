@@ -93,7 +93,7 @@ const Beat = ({ main, sub, mainSize, subSize, color, subColor, italic, duration 
     { extrapolateLeft: 'clamp', extrapolateRight: 'clamp' }
   );
 
-  const scale = interpolate(frame, [0, FADE_IN + 8], [0.93, 1], {
+  const scale = interpolate(frame, [0, duration], [0.93, 1.08], {
     extrapolateLeft: 'clamp', extrapolateRight: 'clamp',
   });
 

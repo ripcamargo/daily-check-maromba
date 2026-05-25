@@ -127,16 +127,21 @@ const TitleCard = ({ title, totalDuration }) => {
         {[
           { label: 'PRESENÇAS', value: title.stats?.present, color: '#10b981' },
           { label: 'XP', value: title.xp, color: accent },
-          { label: 'RANK', value: title.rank?.name, color: 'rgba(255,255,255,0.6)', isText: true },
+          { label: 'LEVEL XP', value: title.rank?.name, color: 'rgba(255,255,255,0.6)', isText: true },
         ].map((s) => (
           <div key={s.label} style={{ textAlign: 'center' }}>
             <div style={{
-              fontFamily: 'Bebas Neue, Impact, sans-serif',
-              fontSize: s.isText ? 28 : 44,
-              color: s.color,
-              lineHeight: 1,
+              height: 48,
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
             }}>
-              {s.value}
+              <div style={{
+                fontFamily: 'Bebas Neue, Impact, sans-serif',
+                fontSize: s.isText ? 28 : 44,
+                color: s.color,
+                lineHeight: 1,
+              }}>
+                {s.value}
+              </div>
             </div>
             <div style={{
               fontFamily: 'Inter, system-ui',

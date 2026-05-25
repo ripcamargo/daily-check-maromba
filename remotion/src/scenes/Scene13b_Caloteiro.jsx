@@ -160,7 +160,7 @@ export const Scene13b_Caloteiro = ({ data }) => {
             fontFamily: 'Inter, system-ui', fontSize: 18,
             color: 'rgba(255,255,255,0.35)', letterSpacing: 2, marginTop: 4,
           }}>
-            ainda em aberto · {top.absences} falta{top.absences !== 1 ? 's' : ''} · pagou {fmt(top.totalPaid)} de {fmt(top.totalOwed)}
+            {top.absences} falta{top.absences !== 1 ? 's' : ''} 
           </div>
         </div>
 

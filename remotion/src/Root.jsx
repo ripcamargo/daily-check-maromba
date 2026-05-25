@@ -71,6 +71,7 @@ const SAMPLE_DATA = {
   champions: {
     first: { id: '1', name: 'Carlos', photoUrl: null, stats: { present: 55, absence: 3, rest: 10, hospital: 0, extra: 4, justified: 0 }, xp: 190, rank: { name: 'Braçudinho' } },
     second: { id: '2', name: 'Ana', photoUrl: null, stats: { present: 48, absence: 5, rest: 12, hospital: 1, extra: 2, justified: 0 }, xp: 160, rank: { name: 'Atleta' } },
+    third: { id: '3', name: 'Pedro', photoUrl: null, stats: { present: 40, absence: 8, rest: 15, hospital: 0, extra: 3, justified: 1 }, xp: 130, rank: { name: 'Atleta' } },
   },
 };
 
