@@ -2,21 +2,22 @@ export const FPS = 30;
 
 export const SCENE_DURATIONS = {
   loading: 90,      // 3s
-  opening: 150,     // 5s
-  numbers: 180,     // 6s
+  teaser: 900,      // ~20s
+  opening: 180,     // 6s
+  numbers: 220,     // 7s
   topPresentes: 210,// 7s
-  hospital: 150,    // 5s
-  descanso: 150,    // 5s
-  bonus: 150,       // 5s
+  hospital: 200,    // 7s
+  descanso: 200,    // 7s 
+  bonus: 220,       // 7s
   sumico: 210,      // 7s
-  desistentes: 120, // 4s
+  desistentes: 220, // 7s
   rankings: 240,    // 8s
-  // titulos: dynamic (45f per athlete, min 150)
+  // titulos: dynamic (170f per athlete, min 150)
   rivalidade: 180,  // 6s
   financeiro: 150,  // 5s
   campeoes: 210,    // 7s
   caloteiro: 210,   // 7s
-  encerramento: 180,// 6s
+  encerramento: 250,// 8s
 };
 
 export function getTitulosDuration(numAthletes) {
@@ -32,6 +33,7 @@ export function computeSceneOffsets(numAthletes) {
 
   const order = [
     ['loading', d.loading],
+    ['teaser', d.teaser],
     ['opening', d.opening],
     ['numbers', d.numbers],
     ['topPresentes', d.topPresentes],
