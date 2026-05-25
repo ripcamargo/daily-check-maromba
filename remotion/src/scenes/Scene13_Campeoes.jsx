@@ -7,6 +7,7 @@ export const Scene13_Campeoes = ({ data }) => {
   const { champions, season } = data;
   const first = champions?.first;
   const second = champions?.second;
+  const third = champions?.third;
 
   const bgOpacity = interpolate(frame, [0, 20], [0, 1], { extrapolateLeft: 'clamp', extrapolateRight: 'clamp' });
   const firstScale = spring({ frame: frame - 10, fps: FPS, config: { damping: 55, stiffness: 200 } });
@@ -14,6 +15,9 @@ export const Scene13_Campeoes = ({ data }) => {
 
   const secondScale = spring({ frame: frame - 80, fps: FPS, config: { damping: 70, stiffness: 200 } });
   const secondOpacity = interpolate(frame, [80, 100], [0, 1], { extrapolateLeft: 'clamp', extrapolateRight: 'clamp' });
+
+  const thirdScale = spring({ frame: frame - 130, fps: FPS, config: { damping: 70, stiffness: 200 } });
+  const thirdOpacity = interpolate(frame, [130, 150], [0, 1], { extrapolateLeft: 'clamp', extrapolateRight: 'clamp' });
 
   const confettiOpacity = interpolate(frame, [5, 20], [0, 1], { extrapolateLeft: 'clamp', extrapolateRight: 'clamp' });
 
@@ -154,6 +158,7 @@ export const Scene13_Campeoes = ({ data }) => {
           border: '1px solid rgba(156,163,175,0.2)',
           width: '100%',
           maxWidth: 600,
+          marginBottom: 12,
         }}>
           <div style={{ fontSize: 40 }}>🥈</div>
           <AthleteAvatar name={second.name} photoUrl={second.photoUrl} size={80} style={{ border: '2px solid #9ca3af' }} />
@@ -167,6 +172,37 @@ export const Scene13_Campeoes = ({ data }) => {
           </div>
           <div style={{ fontFamily: 'Bebas Neue, Impact, sans-serif', fontSize: 44, color: '#9ca3af', lineHeight: 1 }}>
             {second.stats?.present}
+          </div>
+        </div>
+      )}
+
+      {/* Third place */}
+      {third && (
+        <div style={{
+          opacity: thirdOpacity,
+          transform: `scale(${thirdScale})`,
+          display: 'flex',
+          alignItems: 'center',
+          gap: 20,
+          background: 'rgba(180,100,30,0.07)',
+          borderRadius: 20,
+          padding: '16px 28px',
+          border: '1px solid rgba(180,100,30,0.25)',
+          width: '100%',
+          maxWidth: 600,
+        }}>
+          <div style={{ fontSize: 36 }}>🥉</div>
+          <AthleteAvatar name={third.name} photoUrl={third.photoUrl} size={68} style={{ border: '2px solid #cd7f32' }} />
+          <div style={{ flex: 1 }}>
+            <div style={{ fontFamily: 'Bebas Neue, Impact, sans-serif', fontSize: 34, color: '#cd7f32', lineHeight: 1 }}>
+              {third.name}
+            </div>
+            <div style={{ fontFamily: 'Inter, system-ui', fontSize: 14, color: 'rgba(255,255,255,0.3)', marginTop: 4 }}>
+              3º LUGAR · Medalha de bronze
+            </div>
+          </div>
+          <div style={{ fontFamily: 'Bebas Neue, Impact, sans-serif', fontSize: 38, color: '#cd7f32', lineHeight: 1 }}>
+            {third.stats?.present}
           </div>
         </div>
       )}

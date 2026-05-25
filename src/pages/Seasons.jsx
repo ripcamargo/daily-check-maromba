@@ -183,16 +183,20 @@ export default function Seasons() {
       // Ordenar por ranking
       const rankedAthletes = sortByRanking(athletesData);
 
-      // Salvar campeões (1º e 2º lugares)
+      // Salvar campeões (1º, 2º e 3º lugares)
       const champions = {
-        first: rankedAthletes[0] ? { 
-          athleteId: rankedAthletes[0].id, 
-          athleteName: rankedAthletes[0].name 
+        first: rankedAthletes[0] ? {
+          athleteId: rankedAthletes[0].id,
+          athleteName: rankedAthletes[0].name
         } : null,
-        second: rankedAthletes[1] ? { 
-          athleteId: rankedAthletes[1].id, 
-          athleteName: rankedAthletes[1].name 
-        } : null
+        second: rankedAthletes[1] ? {
+          athleteId: rankedAthletes[1].id,
+          athleteName: rankedAthletes[1].name
+        } : null,
+        third: rankedAthletes[2] ? {
+          athleteId: rankedAthletes[2].id,
+          athleteName: rankedAthletes[2].name
+        } : null,
       };
 
       // Atualizar temporada com os campeões
@@ -355,16 +359,20 @@ export default function Seasons() {
       // Ordenar por ranking
       const rankedAthletes = sortByRanking(athletesData);
 
-      // Salvar campeões (1º e 2º lugares)
+      // Salvar campeões (1º, 2º e 3º lugares)
       const champions = {
-        first: rankedAthletes[0] ? { 
-          athleteId: rankedAthletes[0].id, 
-          athleteName: rankedAthletes[0].name 
+        first: rankedAthletes[0] ? {
+          athleteId: rankedAthletes[0].id,
+          athleteName: rankedAthletes[0].name
         } : null,
-        second: rankedAthletes[1] ? { 
-          athleteId: rankedAthletes[1].id, 
-          athleteName: rankedAthletes[1].name 
-        } : null
+        second: rankedAthletes[1] ? {
+          athleteId: rankedAthletes[1].id,
+          athleteName: rankedAthletes[1].name
+        } : null,
+        third: rankedAthletes[2] ? {
+          athleteId: rankedAthletes[2].id,
+          athleteName: rankedAthletes[2].name
+        } : null,
       };
 
       // Finalizar temporada com os campeões

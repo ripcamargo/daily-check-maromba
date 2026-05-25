@@ -223,6 +223,7 @@ export function calculateWrappedData(season, athletes, allCheckins, payments = [
   const champions = {
     first: athletesWithStats.find((a) => a.id === season.champions?.first?.athleteId) || null,
     second: athletesWithStats.find((a) => a.id === season.champions?.second?.athleteId) || null,
+    third: athletesWithStats.find((a) => a.id === season.champions?.third?.athleteId) || null,
   };
 
   return {
