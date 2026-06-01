@@ -1,9 +1,9 @@
-export const Input = ({ 
-  label, 
-  type = 'text', 
-  value, 
-  onChange, 
-  placeholder = '', 
+export const Input = ({
+  label,
+  type = 'text',
+  value,
+  onChange,
+  placeholder = '',
   required = false,
   disabled = false,
   error = null,
@@ -12,9 +12,9 @@ export const Input = ({
   return (
     <div className={`mb-4 ${className}`}>
       {label && (
-        <label className="block text-sm font-medium text-gray-700 mb-2">
+        <label className="block text-sm font-medium text-zinc-300 mb-2">
           {label}
-          {required && <span className="text-red-500 ml-1">*</span>}
+          {required && <span className="text-red-400 ml-1">*</span>}
         </label>
       )}
       <input
@@ -24,11 +24,11 @@ export const Input = ({
         placeholder={placeholder}
         required={required}
         disabled={disabled}
-        className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all ${
-          error ? 'border-red-500' : 'border-gray-300'
-        } ${disabled ? 'bg-gray-100 cursor-not-allowed' : ''}`}
+        className={`w-full px-4 py-2 bg-zinc-800 border rounded-lg focus:ring-2 focus:ring-zinc-500 focus:border-transparent transition-all text-zinc-100 placeholder-zinc-500 ${
+          error ? 'border-red-500' : 'border-zinc-700'
+        } ${disabled ? 'opacity-50 cursor-not-allowed' : ''}`}
       />
-      {error && <p className="text-red-500 text-sm mt-1">{error}</p>}
+      {error && <p className="text-red-400 text-sm mt-1">{error}</p>}
     </div>
   );
 };

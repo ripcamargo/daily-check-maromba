@@ -9,8 +9,8 @@ export const Loading = ({ size = 'md', text = 'Carregando...' }) => {
 
   return (
     <div className="flex flex-col items-center justify-center p-8">
-      <Loader2 className={`${sizes[size]} animate-spin text-blue-600`} />
-      {text && <p className="mt-4 text-gray-600">{text}</p>}
+      <Loader2 className={`${sizes[size]} animate-spin text-zinc-400`} />
+      {text && <p className="mt-4 text-zinc-500">{text}</p>}
     </div>
   );
 };

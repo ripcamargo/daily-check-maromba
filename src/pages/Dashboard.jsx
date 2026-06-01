@@ -233,11 +233,11 @@ export default function Dashboard() {
       <div className="container mx-auto px-4 py-8">
         <Card>
           <div className="text-center py-12">
-            <Trophy className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-            <h2 className="text-2xl font-bold text-gray-800 mb-2">
+            <Trophy className="w-16 h-16 text-zinc-500 mx-auto mb-4" />
+            <h2 className="text-2xl font-bold text-zinc-100 mb-2">
               Bem-vindo ao Daily Check Maromba!
             </h2>
-            <p className="text-gray-600 mb-6">
+            <p className="text-zinc-400 mb-6">
               Crie uma temporada para começar a acompanhar o desempenho dos atletas.
             </p>
           </div>
@@ -381,7 +381,7 @@ export default function Dashboard() {
     <div className="container mx-auto px-2 sm:px-4 py-4 sm:py-8">
       <div className="mb-4 sm:mb-6">
         <div className="flex items-center justify-between mb-4">
-          <h1 className="text-2xl sm:text-3xl font-bold text-gray-800">Dashboard</h1>
+          <h1 className="text-2xl sm:text-3xl font-bold text-zinc-100">Dashboard</h1>
           <Button
             onClick={() => setShowImageGenerator(!showImageGenerator)}
             variant="outline"
@@ -393,14 +393,14 @@ export default function Dashboard() {
         </div>
 
         {/* Filtros */}
-        <div className="bg-white rounded-lg shadow-sm p-3 sm:p-4">
+        <div className="bg-zinc-900 rounded-lg shadow-sm p-3 sm:p-4">
           {/* Filtro de Temporada */}
           <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4">
-            <label className="font-medium text-gray-700 text-sm sm:text-base sm:min-w-[120px]">Temporada:</label>
+            <label className="font-medium text-zinc-300 text-sm sm:text-base sm:min-w-[120px]">Temporada:</label>
             <select
               value={selectedSeasonId || currentSeason?.id || ''}
               onChange={(e) => handleSeasonChange(e.target.value)}
-              className="flex-1 px-3 sm:px-4 py-2 text-sm sm:text-base border border-gray-300 rounded-lg focus:border-transparent"
+              className="flex-1 px-3 sm:px-4 py-2 text-sm sm:text-base bg-zinc-800 border border-zinc-700 rounded-lg text-zinc-100 focus:border-transparent focus:ring-2 focus:ring-zinc-500"
               style={{ focusRing: `2px ${primary}` }}
               onFocus={(e) => {
                 e.target.style.outline = 'none';
@@ -423,7 +423,7 @@ export default function Dashboard() {
       {/* Gerador de Imagem */}
       {showImageGenerator && (
         <div className="mb-4 sm:mb-6">
-          <Card title="📸 Gerar Imagem" className="bg-gradient-to-br from-purple-50 to-pink-50">
+          <Card title="📸 Gerar Imagem" className="bg-gradient-to-br from-purple-400/10 to-pink-400/5">
             <div className="space-y-3">
               {/* Type selector */}
               <div className="flex gap-2">
@@ -432,7 +432,7 @@ export default function Dashboard() {
                   className={`flex-1 px-3 py-2 rounded-lg text-sm font-medium transition-all ${
                     imageType === 'weekly'
                       ? 'text-white shadow-md'
-                      : 'bg-white text-gray-600 border border-gray-200 hover:bg-gray-50'
+                      : 'bg-zinc-900 text-zinc-400 border border-zinc-700 hover:bg-zinc-800/50'
                   }`}
                   style={imageType === 'weekly' ? { backgroundColor: primary } : {}}
                 >
@@ -443,7 +443,7 @@ export default function Dashboard() {
                   className={`flex-1 px-3 py-2 rounded-lg text-sm font-medium transition-all ${
                     imageType === 'ranking'
                       ? 'text-white shadow-md'
-                      : 'bg-white text-gray-600 border border-gray-200 hover:bg-gray-50'
+                      : 'bg-zinc-900 text-zinc-400 border border-zinc-700 hover:bg-zinc-800/50'
                   }`}
                   style={imageType === 'ranking' ? { backgroundColor: primary } : {}}
                 >
@@ -453,14 +453,14 @@ export default function Dashboard() {
 
               {imageType === 'weekly' ? (
                 <>
-                  <p className="text-xs sm:text-sm text-gray-600">Selecione a data para gerar a imagem semanal</p>
+                  <p className="text-xs sm:text-sm text-zinc-400">Selecione a data para gerar a imagem semanal</p>
                   <div className="flex flex-col sm:flex-row sm:items-center gap-3">
-                    <label className="font-medium text-gray-700 text-sm">Data:</label>
+                    <label className="font-medium text-zinc-300 text-sm">Data:</label>
                     <input
                       type="date"
                       value={imageDate}
                       onChange={(e) => setImageDate(e.target.value)}
-                      className="px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 flex-1"
+                      className="px-3 py-2 text-sm bg-zinc-800 border border-zinc-700 rounded-lg text-zinc-100 focus:ring-2 focus:ring-zinc-500 flex-1"
                     />
                     <Button
                       onClick={() => handleGenerateWeeklyImage(false)}
@@ -474,7 +474,7 @@ export default function Dashboard() {
                 </>
               ) : (
                 <>
-                  <p className="text-xs sm:text-sm text-gray-600">
+                  <p className="text-xs sm:text-sm text-zinc-400">
                     Gera imagem com a classificação atual — posição, foto, total de presenças e últimos 7 check-ins de cada atleta.
                   </p>
                   <Button
@@ -503,7 +503,7 @@ export default function Dashboard() {
       )}
 
       {selectedSeason.id !== currentSeason?.id && (
-        <div className="mb-4 flex items-center gap-2 bg-amber-50 border border-amber-200 rounded-lg px-4 py-3 text-sm text-amber-800">
+        <div className="mb-4 flex items-center gap-2 bg-amber-400/10 border border-amber-400/30 rounded-lg px-4 py-3 text-sm text-amber-400">
           <Calendar className="w-4 h-4 flex-shrink-0" />
           <span>Visualizando temporada encerrada: <strong>{selectedSeason.title}</strong></span>
         </div>
@@ -511,56 +511,56 @@ export default function Dashboard() {
 
       {/* Cards de Resumo */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-6 mb-6 sm:mb-8">
-        <Card className="bg-gradient-to-br from-blue-50 to-blue-100">
+        <Card className="bg-gradient-to-br from-blue-400/10 to-blue-400/5">
           <div className="flex flex-col sm:flex-row items-center gap-2 sm:gap-4">
             <div className="p-2 sm:p-3 bg-blue-500 rounded-lg">
               <Users className="w-6 sm:w-8 h-6 sm:h-8 text-white" />
             </div>
             <div className="text-center sm:text-left">
-              <p className="text-xs sm:text-sm text-gray-600">Participantes</p>
-              <p className="text-xl sm:text-2xl font-bold text-gray-800">
+              <p className="text-xs sm:text-sm text-zinc-400">Participantes</p>
+              <p className="text-xl sm:text-2xl font-bold text-zinc-100">
                 {selectedSeason.participants?.length || 0}
               </p>
             </div>
           </div>
         </Card>
 
-        <Card className="bg-gradient-to-br from-green-50 to-green-100">
+        <Card className="bg-gradient-to-br from-emerald-400/10 to-emerald-400/5">
           <div className="flex flex-col sm:flex-row items-center gap-2 sm:gap-4">
             <div className="p-2 sm:p-3 bg-green-500 rounded-lg">
               <DollarSign className="w-6 sm:w-8 h-6 sm:h-8 text-white" />
             </div>
             <div className="text-center sm:text-left">
-              <p className="text-xs sm:text-sm text-gray-600">Total Pago</p>
-              <p className="text-lg sm:text-2xl font-bold text-gray-800">
+              <p className="text-xs sm:text-sm text-zinc-400">Total Pago</p>
+              <p className="text-lg sm:text-2xl font-bold text-zinc-100">
                 {formatCurrency(totalPaid)}
               </p>
             </div>
           </div>
         </Card>
 
-        <Card className="bg-gradient-to-br from-yellow-50 to-yellow-100">
+        <Card className="bg-gradient-to-br from-amber-400/10 to-amber-400/5">
           <div className="flex flex-col sm:flex-row items-center gap-2 sm:gap-4">
             <div className="p-2 sm:p-3 bg-yellow-500 rounded-lg">
               <TrendingUp className="w-6 sm:w-8 h-6 sm:h-8 text-white" />
             </div>
             <div className="text-center sm:text-left">
-              <p className="text-xs sm:text-sm text-gray-600">Previsto</p>
-              <p className="text-lg sm:text-2xl font-bold text-gray-800">
+              <p className="text-xs sm:text-sm text-zinc-400">Previsto</p>
+              <p className="text-lg sm:text-2xl font-bold text-zinc-100">
                 {formatCurrency(totalExpected)}
               </p>
             </div>
           </div>
         </Card>
 
-        <Card className="bg-gradient-to-br from-red-50 to-red-100">
+        <Card className="bg-gradient-to-br from-red-400/10 to-red-400/5">
           <div className="flex flex-col sm:flex-row items-center gap-2 sm:gap-4">
             <div className="p-2 sm:p-3 bg-red-500 rounded-lg">
               <DollarSign className="w-6 sm:w-8 h-6 sm:h-8 text-white" />
             </div>
             <div className="text-center sm:text-left">
-              <p className="text-xs sm:text-sm text-gray-600">Devendo</p>
-              <p className="text-lg sm:text-2xl font-bold text-gray-800">
+              <p className="text-xs sm:text-sm text-zinc-400">Devendo</p>
+              <p className="text-lg sm:text-2xl font-bold text-zinc-100">
                 {formatCurrency(totalDebt)}
               </p>
             </div>
@@ -575,7 +575,7 @@ export default function Dashboard() {
           className={`flex-shrink-0 px-3 sm:px-6 py-2 sm:py-3 rounded-lg text-sm sm:text-base font-medium transition-all ${
             activeTab === 'ranking'
               ? 'text-white shadow-lg'
-              : 'bg-white text-gray-700 hover:bg-gray-50'
+              : 'bg-zinc-900 text-zinc-300 hover:bg-zinc-800/50'
           }`}
           style={activeTab === 'ranking' ? { backgroundColor: primary } : {}}
         >
@@ -586,7 +586,7 @@ export default function Dashboard() {
           className={`flex-shrink-0 px-3 sm:px-6 py-2 sm:py-3 rounded-lg text-sm sm:text-base font-medium transition-all ${
             activeTab === 'financial'
               ? 'text-white shadow-lg'
-              : 'bg-white text-gray-700 hover:bg-gray-50'
+              : 'bg-zinc-900 text-zinc-300 hover:bg-zinc-800/50'
           }`}
           style={activeTab === 'financial' ? { backgroundColor: primary } : {}}
         >
@@ -597,7 +597,7 @@ export default function Dashboard() {
           className={`flex-shrink-0 px-3 sm:px-6 py-2 sm:py-3 rounded-lg text-sm sm:text-base font-medium transition-all ${
             activeTab === 'attendance'
               ? 'text-white shadow-lg'
-              : 'bg-white text-gray-700 hover:bg-gray-50'
+              : 'bg-zinc-900 text-zinc-300 hover:bg-zinc-800/50'
           }`}
           style={activeTab === 'attendance' ? { backgroundColor: primary } : {}}
         >
@@ -612,15 +612,15 @@ export default function Dashboard() {
             <div className="overflow-x-auto -mx-2 sm:mx-0">
               <table className="w-full min-w-[600px]">
                 <thead>
-                  <tr className="border-b-2 border-gray-200">
-                    <th className="text-left py-2 px-1 sm:py-3 sm:px-4 font-semibold text-gray-700 text-xs sm:text-base">Pos</th>
-                    <th className="text-left py-2 px-1 sm:py-3 sm:px-4 font-semibold text-gray-700 text-xs sm:text-base">Atleta</th>
-                    <th className="text-center py-2 px-1 sm:py-3 sm:px-2 font-semibold text-gray-700 text-xs sm:text-base">✅</th>
-                    <th className="text-center py-2 px-1 sm:py-3 sm:px-2 font-semibold text-gray-700 text-xs sm:text-base">❌</th>
-                    <th className="text-center py-2 px-1 sm:py-3 sm:px-2 font-semibold text-gray-700 text-xs sm:text-base">🔷</th>
-                    <th className="text-center py-2 px-1 sm:py-3 sm:px-2 font-semibold text-gray-700 text-xs sm:text-base">📄</th>
-                    <th className="text-center py-2 px-1 sm:py-3 sm:px-2 font-semibold text-gray-700 text-xs sm:text-base">🚑</th>
-                    <th className="text-center py-2 px-1 sm:py-3 sm:px-2 font-semibold text-gray-700 text-xs sm:text-base">⭐</th>
+                  <tr className="border-b-2 border-zinc-700">
+                    <th className="text-left py-2 px-1 sm:py-3 sm:px-4 font-semibold text-zinc-300 text-xs sm:text-base">Pos</th>
+                    <th className="text-left py-2 px-1 sm:py-3 sm:px-4 font-semibold text-zinc-300 text-xs sm:text-base">Atleta</th>
+                    <th className="text-center py-2 px-1 sm:py-3 sm:px-2 font-semibold text-zinc-300 text-xs sm:text-base">✅</th>
+                    <th className="text-center py-2 px-1 sm:py-3 sm:px-2 font-semibold text-zinc-300 text-xs sm:text-base">❌</th>
+                    <th className="text-center py-2 px-1 sm:py-3 sm:px-2 font-semibold text-zinc-300 text-xs sm:text-base">🔷</th>
+                    <th className="text-center py-2 px-1 sm:py-3 sm:px-2 font-semibold text-zinc-300 text-xs sm:text-base">📄</th>
+                    <th className="text-center py-2 px-1 sm:py-3 sm:px-2 font-semibold text-zinc-300 text-xs sm:text-base">🚑</th>
+                    <th className="text-center py-2 px-1 sm:py-3 sm:px-2 font-semibold text-zinc-300 text-xs sm:text-base">⭐</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -629,10 +629,10 @@ export default function Dashboard() {
                     const activeCount = rankedAthletes.filter(a => !a.withdrawn).length;
                     const activeIndex = index; // visual position
                     const isTop3 = !athlete.withdrawn && index < 3;
-                    const bgColor = isTop3 ? 'bg-yellow-50' : athlete.withdrawn ? 'bg-gray-50 opacity-60' : '';
+                    const bgColor = isTop3 ? 'bg-amber-400/5' : athlete.withdrawn ? 'bg-zinc-800/50 opacity-60' : '';
 
                     return (
-                      <tr key={athlete.id} className={`border-b border-gray-100 ${bgColor}`}>
+                      <tr key={athlete.id} className={`border-b border-zinc-800 ${bgColor}`}>
                         <td className="py-2 px-1 sm:py-4 sm:px-4">
                           {athlete.withdrawn ? (
                             <div className="flex items-center justify-center w-6 h-6 sm:w-8 sm:h-8 rounded-full font-bold text-white text-xs sm:text-base bg-gray-300">
@@ -650,7 +650,7 @@ export default function Dashboard() {
                             <Avatar name={athlete.name} photoUrl={athlete.photoUrl} size="sm" className="hidden sm:block" style={athlete.withdrawn ? { filter: 'grayscale(1)' } : {}} />
                             <Avatar name={athlete.name} photoUrl={athlete.photoUrl} size="xs" className="sm:hidden" style={athlete.withdrawn ? { filter: 'grayscale(1)' } : {}} />
                             <div className="flex flex-col">
-                              <span className={`font-bold text-xs sm:text-base truncate max-w-[80px] sm:max-w-none ${athlete.withdrawn ? 'text-gray-400 line-through' : 'text-gray-800'}`}>
+                              <span className={`font-bold text-xs sm:text-base truncate max-w-[80px] sm:max-w-none ${athlete.withdrawn ? 'text-zinc-500 line-through' : 'text-zinc-100'}`}>
                                 {athlete.name}
                               </span>
                               {athlete.withdrawn && (
@@ -661,22 +661,22 @@ export default function Dashboard() {
                             </div>
                           </div>
                         </td>
-                        <td className={`py-2 px-1 sm:py-4 sm:px-2 text-center font-bold text-xs sm:text-base ${athlete.withdrawn ? 'text-gray-400' : 'text-green-600'}`}>
+                        <td className={`py-2 px-1 sm:py-4 sm:px-2 text-center font-bold text-xs sm:text-base ${athlete.withdrawn ? 'text-zinc-500' : 'text-emerald-400'}`}>
                           {athlete.stats.present}
                         </td>
-                        <td className={`py-2 px-1 sm:py-4 sm:px-2 text-center font-bold text-xs sm:text-base ${athlete.withdrawn ? 'text-gray-400' : 'text-red-600'}`}>
+                        <td className={`py-2 px-1 sm:py-4 sm:px-2 text-center font-bold text-xs sm:text-base ${athlete.withdrawn ? 'text-zinc-500' : 'text-red-400'}`}>
                           {athlete.stats.absence}
                         </td>
                         <td className="py-2 px-1 sm:py-4 sm:px-2 text-center font-bold text-xs sm:text-base" style={{ color: athlete.withdrawn ? '#9ca3af' : primary }}>
                           {athlete.stats.rest}
                         </td>
-                        <td className={`py-2 px-1 sm:py-4 sm:px-2 text-center font-bold text-xs sm:text-base ${athlete.withdrawn ? 'text-gray-400' : 'text-indigo-600'}`}>
+                        <td className={`py-2 px-1 sm:py-4 sm:px-2 text-center font-bold text-xs sm:text-base ${athlete.withdrawn ? 'text-zinc-500' : 'text-indigo-400'}`}>
                           {athlete.stats.justified}
                         </td>
-                        <td className={`py-2 px-1 sm:py-4 sm:px-2 text-center font-bold text-xs sm:text-base ${athlete.withdrawn ? 'text-gray-400' : 'text-orange-600'}`}>
+                        <td className={`py-2 px-1 sm:py-4 sm:px-2 text-center font-bold text-xs sm:text-base ${athlete.withdrawn ? 'text-zinc-500' : 'text-orange-400'}`}>
                           {athlete.stats.hospital}
                         </td>
-                        <td className={`py-2 px-1 sm:py-4 sm:px-2 text-center font-bold text-xs sm:text-base ${athlete.withdrawn ? 'text-gray-400' : 'text-yellow-600'}`}>
+                        <td className={`py-2 px-1 sm:py-4 sm:px-2 text-center font-bold text-xs sm:text-base ${athlete.withdrawn ? 'text-zinc-500' : 'text-amber-400'}`}>
                           {athlete.stats.extra}
                         </td>
                       </tr>
@@ -685,7 +685,7 @@ export default function Dashboard() {
                 </tbody>
               </table>
             </div>
-            <div className="mt-3 pt-3 border-t border-gray-100 flex flex-wrap gap-x-4 gap-y-1">
+            <div className="mt-3 pt-3 border-t border-zinc-800 flex flex-wrap gap-x-4 gap-y-1">
               {[
                 { icon: '✅', label: 'Presenças' },
                 { icon: '❌', label: 'Faltas' },
@@ -694,7 +694,7 @@ export default function Dashboard() {
                 { icon: '🚑', label: 'Hospital' },
                 { icon: '⭐', label: 'Bônus' },
               ].map(({ icon, label }) => (
-                <span key={label} className="flex items-center gap-1 text-[11px] text-gray-400">
+                <span key={label} className="flex items-center gap-1 text-[11px] text-zinc-500">
                   <span>{icon}</span>
                   <span>{label}</span>
                 </span>
@@ -707,10 +707,10 @@ export default function Dashboard() {
             <Card title="🛌 Quem Descansou Mais">
               <div className="space-y-3">
                 {sortByMostRest(rankingData.filter(a => !a.withdrawn)).slice(0, 5).map((athlete, index) => (
-                  <div key={athlete.id} className="flex items-center gap-3 p-2 bg-gray-50 rounded-lg">
-                    <span className="font-bold text-gray-600 w-6">{index + 1}º</span>
+                  <div key={athlete.id} className="flex items-center gap-3 p-2 bg-zinc-800/50 rounded-lg">
+                    <span className="font-bold text-zinc-400 w-6">{index + 1}º</span>
                     <Avatar name={athlete.name} photoUrl={athlete.photoUrl} size="sm" />
-                    <span className="flex-1 font-medium text-gray-800">{athlete.name}</span>
+                    <span className="flex-1 font-medium text-zinc-100">{athlete.name}</span>
                     <span className="font-bold" style={{ color: primary }}>{athlete.stats.rest}</span>
                   </div>
                 ))}
@@ -720,11 +720,11 @@ export default function Dashboard() {
             <Card title="❌ Quem Faltou Mais">
               <div className="space-y-3">
                 {sortByMostAbsence(rankingData.filter(a => !a.withdrawn)).slice(0, 5).map((athlete, index) => (
-                  <div key={athlete.id} className="flex items-center gap-3 p-2 bg-gray-50 rounded-lg">
-                    <span className="font-bold text-gray-600 w-6">{index + 1}º</span>
+                  <div key={athlete.id} className="flex items-center gap-3 p-2 bg-zinc-800/50 rounded-lg">
+                    <span className="font-bold text-zinc-400 w-6">{index + 1}º</span>
                     <Avatar name={athlete.name} photoUrl={athlete.photoUrl} size="sm" />
-                    <span className="flex-1 font-medium text-gray-800">{athlete.name}</span>
-                    <span className="font-bold text-red-600">{athlete.stats.absence}</span>
+                    <span className="flex-1 font-medium text-zinc-100">{athlete.name}</span>
+                    <span className="font-bold text-red-400">{athlete.stats.absence}</span>
                   </div>
                 ))}
               </div>
@@ -733,11 +733,11 @@ export default function Dashboard() {
             <Card title="🏥 Quem Foi Mais ao Hospital">
               <div className="space-y-3">
                 {sortByMostHospital(rankingData.filter(a => !a.withdrawn)).slice(0, 5).map((athlete, index) => (
-                  <div key={athlete.id} className="flex items-center gap-3 p-2 bg-gray-50 rounded-lg">
-                    <span className="font-bold text-gray-600 w-6">{index + 1}º</span>
+                  <div key={athlete.id} className="flex items-center gap-3 p-2 bg-zinc-800/50 rounded-lg">
+                    <span className="font-bold text-zinc-400 w-6">{index + 1}º</span>
                     <Avatar name={athlete.name} photoUrl={athlete.photoUrl} size="sm" />
-                    <span className="flex-1 font-medium text-gray-800">{athlete.name}</span>
-                    <span className="font-bold text-orange-600">{athlete.stats.hospital}</span>
+                    <span className="flex-1 font-medium text-zinc-100">{athlete.name}</span>
+                    <span className="font-bold text-orange-400">{athlete.stats.hospital}</span>
                   </div>
                 ))}
               </div>
@@ -752,12 +752,12 @@ export default function Dashboard() {
             <div className="overflow-x-auto">
               <table className="w-full">
                 <thead>
-                  <tr className="border-b-2 border-gray-200">
-                    <th className="text-left py-3 px-4 font-semibold text-gray-700">Atleta</th>
-                    <th className="text-right py-3 px-4 font-semibold text-gray-700">Valor a Pagar</th>
-                    <th className="text-right py-3 px-4 font-semibold text-gray-700">Valor Pago</th>
-                    <th className="text-right py-3 px-4 font-semibold text-gray-700">Valor Devendo</th>
-                    <th className="text-center py-3 px-4 font-semibold text-gray-700">Status</th>
+                  <tr className="border-b-2 border-zinc-700">
+                    <th className="text-left py-3 px-4 font-semibold text-zinc-300">Atleta</th>
+                    <th className="text-right py-3 px-4 font-semibold text-zinc-300">Valor a Pagar</th>
+                    <th className="text-right py-3 px-4 font-semibold text-zinc-300">Valor Pago</th>
+                    <th className="text-right py-3 px-4 font-semibold text-zinc-300">Valor Devendo</th>
+                    <th className="text-center py-3 px-4 font-semibold text-zinc-300">Status</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -768,33 +768,33 @@ export default function Dashboard() {
                       const hasDebt = athlete.debt > 0;
                       
                       return (
-                        <tr key={athlete.id} className="border-b border-gray-100 hover:bg-gray-50">
+                        <tr key={athlete.id} className="border-b border-zinc-800 hover:bg-zinc-800/50">
                           <td className="py-4 px-4">
                             <div className="flex items-center gap-3">
                               <Avatar name={athlete.name} photoUrl={athlete.photoUrl} size="md" />
-                              <span className="font-medium text-gray-800">{athlete.name}</span>
+                              <span className="font-medium text-zinc-100">{athlete.name}</span>
                             </div>
                           </td>
-                          <td className="py-4 px-4 text-right font-bold text-gray-800">
+                          <td className="py-4 px-4 text-right font-bold text-zinc-100">
                             {formatCurrency(athlete.fineInfo.fineAmount)}
                           </td>
-                          <td className="py-4 px-4 text-right font-bold text-green-600">
+                          <td className="py-4 px-4 text-right font-bold text-emerald-400">
                             {formatCurrency(athlete.totalPaid)}
                           </td>
-                          <td className="py-4 px-4 text-right font-bold text-red-600">
+                          <td className="py-4 px-4 text-right font-bold text-red-400">
                             {formatCurrency(athlete.debt)}
                           </td>
                           <td className="py-4 px-4 text-center">
                             {isPaid ? (
-                              <span className="px-3 py-1 bg-green-100 text-green-800 text-sm font-bold rounded-full">
+                              <span className="px-3 py-1 bg-emerald-400/10 text-emerald-400 text-sm font-bold rounded-full">
                                 ✓ PAGO
                               </span>
                             ) : hasDebt ? (
-                              <span className="px-3 py-1 bg-red-100 text-red-800 text-sm font-bold rounded-full">
+                              <span className="px-3 py-1 bg-red-400/10 text-red-400 text-sm font-bold rounded-full">
                                 DEVENDO
                               </span>
                             ) : (
-                              <span className="px-3 py-1 bg-gray-100 text-gray-800 text-sm font-bold rounded-full">
+                              <span className="px-3 py-1 bg-zinc-700 text-zinc-300 text-sm font-bold rounded-full">
                                 SEM MULTA
                               </span>
                             )}
@@ -804,15 +804,15 @@ export default function Dashboard() {
                     })}
                 </tbody>
                 <tfoot>
-                  <tr className="border-t-2 border-gray-300 bg-gray-50">
-                    <td className="py-4 px-4 font-bold text-gray-800">TOTAL</td>
-                    <td className="py-4 px-4 text-right font-bold text-gray-800 text-lg">
+                  <tr className="border-t-2 border-zinc-700 bg-zinc-800/50">
+                    <td className="py-4 px-4 font-bold text-zinc-100">TOTAL</td>
+                    <td className="py-4 px-4 text-right font-bold text-zinc-100 text-lg">
                       {formatCurrency(totalExpected)}
                     </td>
-                    <td className="py-4 px-4 text-right font-bold text-green-600 text-lg">
+                    <td className="py-4 px-4 text-right font-bold text-emerald-400 text-lg">
                       {formatCurrency(totalPaid)}
                     </td>
-                    <td className="py-4 px-4 text-right font-bold text-red-600 text-lg">
+                    <td className="py-4 px-4 text-right font-bold text-red-400 text-lg">
                       {formatCurrency(totalDebt)}
                     </td>
                     <td></td>
@@ -824,23 +824,23 @@ export default function Dashboard() {
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-6">
             <Card>
-              <h3 className="font-bold text-gray-700 mb-2">💵 Valor Total Previsto</h3>
+              <h3 className="font-bold text-zinc-300 mb-2">💵 Valor Total Previsto</h3>
               <p className="text-3xl font-bold" style={{ color: primary }}>{formatCurrency(totalExpected)}</p>
-              <p className="text-sm text-gray-600 mt-2">Se todos pagarem suas multas</p>
+              <p className="text-sm text-zinc-400 mt-2">Se todos pagarem suas multas</p>
             </Card>
 
-            <Card className="bg-gradient-to-br from-green-50 to-green-100">
-              <h3 className="font-bold text-gray-700 mb-2">💰 Valor Atual em Caixa</h3>
-              <p className="text-3xl font-bold text-green-600">{formatCurrency(totalPaid)}</p>
-              <p className="text-sm text-gray-600 mt-2">
+            <Card className="bg-gradient-to-br from-emerald-400/10 to-emerald-400/5">
+              <h3 className="font-bold text-zinc-300 mb-2">💰 Valor Atual em Caixa</h3>
+              <p className="text-3xl font-bold text-emerald-400">{formatCurrency(totalPaid)}</p>
+              <p className="text-sm text-zinc-400 mt-2">
                 {formatPercentage(totalExpected > 0 ? (totalPaid / totalExpected) * 100 : 0)} arrecadado
               </p>
             </Card>
 
-            <Card className="bg-gradient-to-br from-red-50 to-red-100">
-              <h3 className="font-bold text-gray-700 mb-2">🔴 Pendente</h3>
-              <p className="text-3xl font-bold text-red-600">{formatCurrency(totalDebt)}</p>
-              <p className="text-sm text-gray-600 mt-2">Valor ainda não pago</p>
+            <Card className="bg-gradient-to-br from-red-400/10 to-red-400/5">
+              <h3 className="font-bold text-zinc-300 mb-2">🔴 Pendente</h3>
+              <p className="text-3xl font-bold text-red-400">{formatCurrency(totalDebt)}</p>
+              <p className="text-sm text-zinc-400 mt-2">Valor ainda não pago</p>
             </Card>
           </div>
         </>
@@ -864,37 +864,37 @@ export default function Dashboard() {
           {/* Filtros */}
           <div className="mb-4 grid grid-cols-1 md:grid-cols-3 gap-3">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium text-zinc-300 mb-1">
                 Filtrar por Data
               </label>
               <input
                 type="date"
                 value={logDateFilter}
                 onChange={(e) => setLogDateFilter(e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"
+                className="w-full px-3 py-2 border border-zinc-700 rounded-lg text-sm"
                 placeholder="Todas as datas"
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium text-zinc-300 mb-1">
                 Filtrar por Atleta
               </label>
               <input
                 type="text"
                 value={logAthleteFilter}
                 onChange={(e) => setLogAthleteFilter(e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"
+                className="w-full px-3 py-2 border border-zinc-700 rounded-lg text-sm"
                 placeholder="Digite o nome..."
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium text-zinc-300 mb-1">
                 Filtrar por Status
               </label>
               <select
                 value={logStatusFilter}
                 onChange={(e) => setLogStatusFilter(e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"
+                className="w-full px-3 py-2 border border-zinc-700 rounded-lg text-sm"
               >
                 <option value="">Todos os status</option>
                 <option value={CheckinStatus.PRESENT}>Presente</option>
@@ -912,11 +912,11 @@ export default function Dashboard() {
           <div className="overflow-x-auto">
             <table className="w-full">
               <thead>
-                <tr className="border-b-2 border-gray-200">
-                  <th className="text-left py-3 px-4 font-semibold text-gray-700">Data</th>
-                  <th className="text-left py-3 px-4 font-semibold text-gray-700">Atleta</th>
-                  <th className="text-center py-3 px-4 font-semibold text-gray-700">Status</th>
-                  <th className="text-left py-3 px-4 font-semibold text-gray-700">Descrição</th>
+                <tr className="border-b-2 border-zinc-700">
+                  <th className="text-left py-3 px-4 font-semibold text-zinc-300">Data</th>
+                  <th className="text-left py-3 px-4 font-semibold text-zinc-300">Atleta</th>
+                  <th className="text-center py-3 px-4 font-semibold text-zinc-300">Status</th>
+                  <th className="text-left py-3 px-4 font-semibold text-zinc-300">Descrição</th>
                 </tr>
               </thead>
               <tbody>
@@ -935,15 +935,15 @@ export default function Dashboard() {
                   })
                   .map((log, index) => {
                   const statusColors = {
-                    [CheckinStatus.NOT_SET]: 'bg-gray-50 text-gray-600',
-                    [CheckinStatus.PRESENT]: 'bg-green-50 text-green-800',
-                    [CheckinStatus.ABSENT]: 'bg-blue-50 text-blue-800',
-                    [CheckinStatus.HOSPITAL]: 'bg-orange-50 text-orange-800',
-                    [CheckinStatus.JUSTIFIED]: 'bg-indigo-50 text-indigo-800',
-                    [CalculatedStatus.REST]: 'bg-blue-50 text-blue-800',
-                    [CalculatedStatus.BONUS_REST]: 'bg-orange-50 text-orange-800',
-                    [CalculatedStatus.ABSENCE]: 'bg-red-50 text-red-800',
-                    [CalculatedStatus.EXTRA]: 'bg-yellow-50 text-yellow-800'
+                    [CheckinStatus.NOT_SET]: 'bg-zinc-800/50 text-zinc-400',
+                    [CheckinStatus.PRESENT]: 'bg-emerald-400/10 text-emerald-400',
+                    [CheckinStatus.ABSENT]: 'bg-blue-400/10 text-blue-400',
+                    [CheckinStatus.HOSPITAL]: 'bg-orange-400/10 text-orange-400',
+                    [CheckinStatus.JUSTIFIED]: 'bg-indigo-400/10 text-indigo-400',
+                    [CalculatedStatus.REST]: 'bg-blue-400/10 text-blue-400',
+                    [CalculatedStatus.BONUS_REST]: 'bg-orange-400/10 text-orange-400',
+                    [CalculatedStatus.ABSENCE]: 'bg-red-400/10 text-red-400',
+                    [CalculatedStatus.EXTRA]: 'bg-amber-400/10 text-amber-400'
                   };
 
                   const statusLabels = {
@@ -958,7 +958,7 @@ export default function Dashboard() {
                     [CalculatedStatus.EXTRA]: 'Extra (bônus)'
                   };
                   
-                  const bgClass = statusColors[log.status] || 'bg-gray-50';
+                  const bgClass = statusColors[log.status] || 'bg-zinc-800/50';
                   
                   try {
                     // Formatar data manualmente sem usar Date object para evitar problemas de timezone
@@ -972,7 +972,7 @@ export default function Dashboard() {
                     const formattedDate = `${day}/${month}/${year} (${weekday})`;
                     
                     return (
-                      <tr key={`${log.date}-${log.athleteId}-${index}`} className={`border-b border-gray-100 ${bgClass}`}>
+                      <tr key={`${log.date}-${log.athleteId}-${index}`} className={`border-b border-zinc-800 ${bgClass}`}>
                         <td className="py-3 px-4 font-medium">
                           {formattedDate}
                         </td>
@@ -1003,7 +1003,7 @@ export default function Dashboard() {
             </table>
             
             {attendanceLog.length === 0 && (
-              <div className="text-center py-12 text-gray-500">
+              <div className="text-center py-12 text-zinc-500">
                 Nenhum registro de presença encontrado.
               </div>
             )}
@@ -1014,7 +1014,7 @@ export default function Dashboard() {
               if (logStatusFilter && log.status !== logStatusFilter) return false;
               return true;
             }).length === 0 && (
-              <div className="text-center py-12 text-gray-500">
+              <div className="text-center py-12 text-zinc-500">
                 Nenhum registro encontrado com os filtros aplicados.
               </div>
             )}

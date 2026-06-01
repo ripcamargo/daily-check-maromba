@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { LogIn } from 'lucide-react';
-import { Card } from '../components/Card';
+import { LogIn, Dumbbell } from 'lucide-react';
 import { Button } from '../components/Button';
 import { Alert } from '../components/Alert';
 import { useAuth } from '../context/AuthContext';
@@ -23,9 +22,7 @@ export default function Login() {
 
     if (result.success) {
       setAlert({ type: 'success', message: 'Login realizado com sucesso!' });
-      setTimeout(() => {
-        navigate('/');
-      }, 1000);
+      setTimeout(() => navigate('/'), 1000);
     } else {
       setAlert({ type: 'error', message: 'Email ou senha incorretos' });
     }
@@ -34,51 +31,47 @@ export default function Login() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-blue-100 flex items-center justify-center px-4">
-      <div className="w-full max-w-md">
-        <Card>
-          <div className="text-center mb-8">
-            <div className="inline-flex items-center justify-center w-16 h-16 bg-blue-100 rounded-full mb-4">
-              <LogIn className="w-8 h-8 text-blue-600" />
-            </div>
-            <h1 className="text-3xl font-bold text-gray-800 mb-2">Login Admin</h1>
-            <p className="text-gray-600">Acesse o painel administrativo</p>
-          </div>
+    <div className="min-h-screen bg-[#0c0c12] flex items-center justify-center px-4">
+      {/* Background grid subtle */}
+      <div className="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.02)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.02)_1px,transparent_1px)] bg-[size:40px_40px] pointer-events-none" />
 
+      <div className="relative w-full max-w-md">
+        {/* Logo / brand */}
+        <div className="text-center mb-8">
+          <div className="inline-flex items-center justify-center w-16 h-16 bg-zinc-800 border border-zinc-700 rounded-2xl mb-4">
+            <Dumbbell className="w-8 h-8 text-zinc-300" />
+          </div>
+          <h1 className="text-3xl font-bold text-zinc-100 mb-1 tracking-tight">Admin</h1>
+          <p className="text-zinc-500 text-sm">Acesso ao painel administrativo</p>
+        </div>
+
+        <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-8 shadow-2xl">
           {alert && (
             <div className="mb-6">
-              <Alert
-                type={alert.type}
-                message={alert.message}
-                onClose={() => setAlert(null)}
-              />
+              <Alert type={alert.type} message={alert.message} onClose={() => setAlert(null)} />
             </div>
           )}
 
-          <form onSubmit={handleSubmit} className="space-y-4">
+          <form onSubmit={handleSubmit} className="space-y-5">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Email
-              </label>
+              <label className="block text-sm font-medium text-zinc-300 mb-2">Email</label>
               <input
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="w-full px-4 py-3 bg-zinc-800 border border-zinc-700 rounded-lg text-zinc-100 placeholder-zinc-500 focus:outline-none focus:ring-2 focus:ring-zinc-500 focus:border-transparent transition-all"
                 placeholder="admin@exemplo.com"
                 required
               />
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Senha
-              </label>
+              <label className="block text-sm font-medium text-zinc-300 mb-2">Senha</label>
               <input
                 type="password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="w-full px-4 py-3 bg-zinc-800 border border-zinc-700 rounded-lg text-zinc-100 placeholder-zinc-500 focus:outline-none focus:ring-2 focus:ring-zinc-500 focus:border-transparent transition-all"
                 placeholder="••••••••"
                 required
               />
@@ -87,7 +80,7 @@ export default function Login() {
             <Button
               type="submit"
               disabled={loading}
-              className="w-full flex items-center justify-center gap-2 py-3"
+              className="w-full flex items-center justify-center gap-2 py-3 text-base font-semibold"
             >
               <LogIn className="w-5 h-5" />
               {loading ? 'Entrando...' : 'Entrar'}
@@ -97,12 +90,12 @@ export default function Login() {
           <div className="mt-6 text-center">
             <button
               onClick={() => navigate('/')}
-              className="text-sm text-blue-600 hover:text-blue-700"
+              className="text-sm text-zinc-500 hover:text-zinc-300 transition-colors"
             >
-              Voltar para o site
+              ← Voltar para o site
             </button>
           </div>
-        </Card>
+        </div>
       </div>
     </div>
   );

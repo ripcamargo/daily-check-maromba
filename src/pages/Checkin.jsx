@@ -9,12 +9,12 @@ import { useSeason } from '../context/SeasonContext';
 import { useThemeColor } from '../context/ThemeColorContext';
 import { useAthletes } from '../context/AthletesContext';
 import { useAuth } from '../context/AuthContext';
-import { 
-  CheckinStatus, 
-  StatusEmoji, 
+import {
+  CheckinStatus,
+  StatusEmoji,
   StatusColor,
   getCheckinsByDate,
-  saveCheckins 
+  saveCheckins
 } from '../services/checkins';
 import { formatDate } from '../utils/formatters';
 
@@ -51,7 +51,7 @@ export default function Checkin() {
     setLoading(true);
     try {
       const data = await getCheckinsByDate(currentSeason.id, selectedDate);
-      
+
       // Inicializa com todos os participantes
       const initialCheckins = {};
       currentSeason.participants?.forEach(athleteId => {
@@ -63,14 +63,14 @@ export default function Checkin() {
       if (data?.athletes) {
         Object.keys(data.athletes).forEach(athleteId => {
           const athleteData = data.athletes[athleteId];
-          
+
           // Sempre carrega o status calculado para visualização
           // Quando clicar em "Editar", vamos mostrar o original
           initialCheckins[athleteId] = {
             status: athleteData.status,
             originalStatus: athleteData.originalStatus
           };
-          
+
           if (athleteData.status !== CheckinStatus.NOT_SET) {
             hasData = true;
           }
@@ -128,14 +128,14 @@ export default function Checkin() {
 
     try {
       await saveCheckins(currentSeason.id, selectedDate, checkins, currentSeason);
-      
+
       // Recarregar para mostrar status processados
       await loadCheckins();
-      
+
       setHasSavedData(true);
       setIsEditing(false);
       setAlert({ type: 'success', message: 'Check-ins salvos com sucesso!' });
-      
+
       // Auto-fechar alerta após 3 segundos
       setTimeout(() => setAlert(null), 3000);
     } catch (error) {
@@ -151,8 +151,8 @@ export default function Checkin() {
       <div className="container mx-auto px-4 py-8">
         <Card>
           <div className="text-center py-12">
-            <CalendarIcon className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-            <p className="text-gray-600 text-lg">
+            <CalendarIcon className="w-16 h-16 text-zinc-600 mx-auto mb-4" />
+            <p className="text-zinc-400 text-lg">
               Nenhuma temporada ativa. Crie uma temporada para começar.
             </p>
           </div>
@@ -182,11 +182,11 @@ export default function Checkin() {
     const currentDate = new Date(year, month - 1, day);
     currentDate.setDate(currentDate.getDate() + days);
     const newDate = getLocalDateString(currentDate);
-    
+
     // Verifica se a data está dentro da temporada
     const seasonStart = formatDate(currentSeason.startDate, 'yyyy-MM-dd');
     const seasonEnd = formatDate(currentSeason.endDate, 'yyyy-MM-dd');
-    
+
     if (newDate >= seasonStart && newDate <= seasonEnd) {
       setSelectedDate(newDate);
     }
@@ -195,8 +195,8 @@ export default function Checkin() {
   return (
     <div className="container mx-auto px-4 py-8">
       <div className="mb-8">
-        <h1 className="text-3xl font-bold text-gray-800 mb-2">Registro de Check-in</h1>
-        <p className="text-gray-600">Registre a presença dos atletas</p>
+        <h1 className="text-3xl font-bold text-zinc-100 mb-2">Registro de Check-in</h1>
+        <p className="text-zinc-400">Registre a presença dos atletas</p>
       </div>
 
       {/* Toast/Pop-up de notificação */}
@@ -222,10 +222,10 @@ export default function Checkin() {
               <ChevronLeft className="w-5 h-5" />
               Dia Anterior
             </Button>
-            
+
             <div className="flex-1 text-center">
-              <p className="text-sm text-gray-600 mb-1">Data Selecionada</p>
-              <p className="text-2xl font-bold text-gray-800">
+              <p className="text-sm text-zinc-400 mb-1">Data Selecionada</p>
+              <p className="text-2xl font-bold text-zinc-100">
                 {(() => {
                   const [year, month, day] = selectedDate.split('-').map(Number);
                   const dateObj = new Date(year, month - 1, day);
@@ -233,7 +233,7 @@ export default function Checkin() {
                 })()}
               </p>
             </div>
-            
+
             <Button
               variant="outline"
               onClick={() => changeDate(1)}
@@ -244,9 +244,9 @@ export default function Checkin() {
               <ChevronRight className="w-5 h-5" />
             </Button>
           </div>
-          
+
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block text-sm font-medium text-zinc-300 mb-2">
               Ou selecione uma data específica:
             </label>
             <input
@@ -255,7 +255,7 @@ export default function Checkin() {
               onChange={(e) => setSelectedDate(e.target.value)}
               min={formatDate(currentSeason.startDate, 'yyyy-MM-dd')}
               max={formatDate(currentSeason.endDate, 'yyyy-MM-dd')}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:border-transparent"
+              className="w-full px-4 py-2 border border-zinc-700 rounded-lg bg-zinc-800 text-zinc-100 focus:border-transparent focus:outline-none"
               onFocus={(e) => {
                 e.target.style.outline = 'none';
                 e.target.style.boxShadow = `0 0 0 3px ${primary}40`;
@@ -273,7 +273,7 @@ export default function Checkin() {
       ) : participants.length === 0 ? (
         <Card>
           <div className="text-center py-12">
-            <p className="text-gray-600">
+            <p className="text-zinc-400">
               Nenhum participante cadastrado nesta temporada.
             </p>
           </div>
@@ -287,14 +287,14 @@ export default function Checkin() {
 
               const athleteData = checkins[athleteId] || { status: CheckinStatus.NOT_SET };
               const currentStatus = athleteData.status;
-              
+
               // Quando não está editando, usa o originalStatus para mostrar o botão correto
-              const displayStatus = !isEditing && athleteData.originalStatus 
-                ? athleteData.originalStatus 
+              const displayStatus = !isEditing && athleteData.originalStatus
+                ? athleteData.originalStatus
                 : currentStatus;
 
               return (
-                <Card key={athleteId} className="hover:shadow-lg transition-shadow">
+                <Card key={athleteId} className="hover:shadow-lg hover:bg-zinc-800 transition-all">
                   <div className="flex flex-col md:flex-row items-start md:items-center gap-4">
                     <div className="flex items-center gap-4 flex-1">
                       <Avatar
@@ -303,7 +303,7 @@ export default function Checkin() {
                         size="lg"
                       />
                       <div>
-                        <h3 className="text-xl font-bold text-gray-800">
+                        <h3 className="text-xl font-bold text-zinc-100">
                           {athlete.name}
                         </h3>
                       </div>
@@ -317,14 +317,14 @@ export default function Checkin() {
                           disabled={!isEditing}
                           className={`px-4 py-3 rounded-lg font-medium transition-all flex items-center gap-2 ${
                             displayStatus === option.value
-                              ? 'ring-4 ring-offset-2 scale-105'
+                              ? 'ring-4 ring-offset-2 ring-offset-zinc-900 scale-105'
                               : isEditing ? 'hover:scale-105' : 'opacity-60 cursor-not-allowed'
                           }`}
                           style={{
-                            backgroundColor: displayStatus === option.value 
-                              ? StatusColor[option.value] 
-                              : '#f3f4f6',
-                            color: displayStatus === option.value ? '#fff' : '#374151',
+                            backgroundColor: displayStatus === option.value
+                              ? StatusColor[option.value]
+                              : '#3f3f46',
+                            color: displayStatus === option.value ? '#fff' : '#a1a1aa',
                             ringColor: StatusColor[option.value]
                           }}
                           title={option.label}

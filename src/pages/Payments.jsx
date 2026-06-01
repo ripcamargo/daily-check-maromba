@@ -99,8 +99,8 @@ export default function Payments() {
       <div className="container mx-auto px-4 py-8">
         <Card>
           <div className="text-center py-12">
-            <DollarSign className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-            <p className="text-gray-600 text-lg">
+            <DollarSign className="w-16 h-16 text-zinc-600 mx-auto mb-4" />
+            <p className="text-zinc-400 text-lg">
               Nenhuma temporada ativa. Crie uma temporada para começar.
             </p>
           </div>
@@ -132,8 +132,8 @@ export default function Payments() {
     <div className="container mx-auto px-4 py-8">
       <div className="flex justify-between items-center mb-8">
         <div>
-          <h1 className="text-3xl font-bold text-gray-800">Pagamentos</h1>
-          <p className="text-gray-600 mt-2">Registre os pagamentos de multas</p>
+          <h1 className="text-3xl font-bold text-zinc-100">Pagamentos</h1>
+          <p className="text-zinc-400 mt-2">Registre os pagamentos de multas</p>
         </div>
         {isAdmin && (
           <Button onClick={handleOpenModal} className="flex items-center gap-2">
@@ -154,14 +154,14 @@ export default function Payments() {
       )}
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-        <Card className="bg-gradient-to-br from-green-50 to-green-100">
+        <Card className="bg-gradient-to-br from-emerald-400/10 to-emerald-400/5">
           <div className="flex items-center gap-4">
-            <div className="p-3 bg-green-500 rounded-lg">
-              <DollarSign className="w-8 h-8 text-white" />
+            <div className="p-3 bg-green-500/20 rounded-lg">
+              <DollarSign className="w-8 h-8 text-emerald-400" />
             </div>
             <div>
-              <p className="text-sm text-gray-600">Total em Caixa</p>
-              <p className="text-2xl font-bold text-gray-800">
+              <p className="text-sm text-zinc-400">Total em Caixa</p>
+              <p className="text-2xl font-bold text-zinc-100">
                 {formatCurrency(totalPaid)}
               </p>
             </div>
@@ -170,26 +170,26 @@ export default function Payments() {
 
         <Card>
           <div className="flex items-center gap-4">
-            <div className="p-3 rounded-lg" style={{ backgroundColor: primary }}>
-              <Calendar className="w-8 h-8 text-white" />
+            <div className="p-3 rounded-lg" style={{ backgroundColor: `${primary}30` }}>
+              <Calendar className="w-8 h-8" style={{ color: primary }} />
             </div>
             <div>
-              <p className="text-sm text-gray-600">Total de Pagamentos</p>
-              <p className="text-2xl font-bold text-gray-800">
+              <p className="text-sm text-zinc-400">Total de Pagamentos</p>
+              <p className="text-2xl font-bold text-zinc-100">
                 {payments.length}
               </p>
             </div>
           </div>
         </Card>
 
-        <Card className="bg-gradient-to-br from-purple-50 to-purple-100">
+        <Card className="bg-gradient-to-br from-blue-400/10 to-blue-400/5">
           <div className="flex items-center gap-4">
-            <div className="p-3 bg-purple-500 rounded-lg">
-              <DollarSign className="w-8 h-8 text-white" />
+            <div className="p-3 bg-blue-500/20 rounded-lg">
+              <DollarSign className="w-8 h-8 text-blue-400" />
             </div>
             <div>
-              <p className="text-sm text-gray-600">Ticket Médio</p>
-              <p className="text-2xl font-bold text-gray-800">
+              <p className="text-sm text-zinc-400">Ticket Médio</p>
+              <p className="text-2xl font-bold text-zinc-100">
                 {formatCurrency(payments.length > 0 ? totalPaid / payments.length : 0)}
               </p>
             </div>
@@ -202,7 +202,7 @@ export default function Payments() {
           <Loading text="Carregando pagamentos..." />
         ) : payments.length === 0 ? (
           <div className="text-center py-12">
-            <p className="text-gray-500 mb-4">Nenhum pagamento registrado ainda.</p>
+            <p className="text-zinc-500 mb-4">Nenhum pagamento registrado ainda.</p>
             {isAdmin && (
               <Button onClick={handleOpenModal}>Registrar Primeiro Pagamento</Button>
             )}
@@ -211,18 +211,18 @@ export default function Payments() {
           <div className="overflow-x-auto">
             <table className="w-full">
               <thead>
-                <tr className="border-b-2 border-gray-200">
-                  <th className="text-left py-3 px-4 font-semibold text-gray-700">Atleta</th>
-                  <th className="text-left py-3 px-4 font-semibold text-gray-700">Data</th>
-                  <th className="text-right py-3 px-4 font-semibold text-gray-700">Valor</th>
-                  {isAdmin && <th className="text-center py-3 px-4 font-semibold text-gray-700 w-16"></th>}
+                <tr className="border-b-2 border-zinc-700">
+                  <th className="text-left py-3 px-4 font-semibold text-zinc-300">Atleta</th>
+                  <th className="text-left py-3 px-4 font-semibold text-zinc-300">Data</th>
+                  <th className="text-right py-3 px-4 font-semibold text-zinc-300">Valor</th>
+                  {isAdmin && <th className="text-center py-3 px-4 font-semibold text-zinc-300 w-16"></th>}
                 </tr>
               </thead>
               <tbody>
                 {payments.map((payment) => {
                   const athlete = getAthleteById(payment.athleteId);
                   return (
-                    <tr key={payment.id} className="border-b border-gray-100 hover:bg-gray-50">
+                    <tr key={payment.id} className="border-b border-zinc-800 hover:bg-zinc-800">
                       <td className="py-3 px-4">
                         <div className="flex items-center gap-3">
                           <Avatar
@@ -230,22 +230,22 @@ export default function Payments() {
                             photoUrl={athlete?.photoUrl}
                             size="sm"
                           />
-                          <span className="font-medium text-gray-800">
+                          <span className="font-medium text-zinc-100">
                             {athlete?.name || 'Atleta não encontrado'}
                           </span>
                         </div>
                       </td>
-                      <td className="py-3 px-4 text-gray-600">
+                      <td className="py-3 px-4 text-zinc-400">
                         {formatDate(payment.date)}
                       </td>
-                      <td className="py-3 px-4 text-right font-bold text-green-600">
+                      <td className="py-3 px-4 text-right font-bold text-emerald-400">
                         {formatCurrency(payment.value)}
                       </td>
                       {isAdmin && (
                         <td className="py-3 px-4 text-center">
                           <button
                             onClick={() => handleDelete(payment.id)}
-                            className="text-gray-400 hover:text-red-500 transition-colors p-1 rounded hover:bg-red-50"
+                            className="text-zinc-500 hover:text-red-400 transition-colors p-1 rounded hover:bg-red-400/10"
                             title="Excluir pagamento"
                           >
                             <Trash2 className="w-4 h-4" />
@@ -257,11 +257,11 @@ export default function Payments() {
                 })}
               </tbody>
               <tfoot>
-                <tr className="border-t-2 border-gray-300 bg-gray-50">
-                  <td colSpan="2" className="py-3 px-4 font-bold text-gray-800">
+                <tr className="border-t-2 border-zinc-700 bg-zinc-800/50">
+                  <td colSpan="2" className="py-3 px-4 font-bold text-zinc-100">
                     TOTAL
                   </td>
-                  <td className="py-3 px-4 text-right font-bold text-green-600 text-lg">
+                  <td className="py-3 px-4 text-right font-bold text-emerald-400 text-lg">
                     {formatCurrency(totalPaid)}
                   </td>
                   {isAdmin && <td></td>}
@@ -280,7 +280,7 @@ export default function Payments() {
               const athlete = getAthleteById(athleteId);
               const total = athletePayments.reduce((sum, p) => sum + p.value, 0);
               return (
-                <div key={athleteId} className="p-4 bg-gray-50 rounded-lg">
+                <div key={athleteId} className="p-4 bg-zinc-800 rounded-lg border border-zinc-700">
                   <div className="flex items-center gap-3 mb-2">
                     <Avatar
                       name={athlete?.name || 'Atleta'}
@@ -288,11 +288,11 @@ export default function Payments() {
                       size="md"
                     />
                     <div>
-                      <p className="font-bold text-gray-800">{athlete?.name}</p>
-                      <p className="text-sm text-gray-600">{athletePayments.length} pagamentos</p>
+                      <p className="font-bold text-zinc-100">{athlete?.name}</p>
+                      <p className="text-sm text-zinc-400">{athletePayments.length} pagamentos</p>
                     </div>
                   </div>
-                  <p className="text-xl font-bold text-green-600 mt-2">
+                  <p className="text-xl font-bold text-emerald-400 mt-2">
                     {formatCurrency(total)}
                   </p>
                 </div>

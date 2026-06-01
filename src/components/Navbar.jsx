@@ -1,14 +1,6 @@
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import {
-  Home,
-  Users,
-  Calendar,
-  CheckSquare,
-  DollarSign,
-  Dumbbell,
-  LogIn,
-  LogOut,
-  Film
+  Home, Users, Calendar, CheckSquare, DollarSign, Dumbbell, LogIn, LogOut, Film
 } from 'lucide-react';
 import { useSeason } from '../context/SeasonContext';
 import { useSeasonColors } from '../hooks/useSeasonColors';
@@ -35,35 +27,29 @@ export const Navbar = () => {
     navigate('/');
   };
 
-  // Define cores do navbar
-  const navbarBgColor = currentSeason && darkerColor 
-    ? darkerColor 
-    : 'linear-gradient(to right, rgb(37, 99, 235), rgb(30, 64, 175))';
-
-  const navbarStyle = {
-    background: typeof navbarBgColor === 'string' && navbarBgColor.startsWith('#')
-      ? `linear-gradient(to right, ${navbarBgColor}, ${navbarBgColor})`
-      : navbarBgColor
-  };
+  const navbarStyle = currentSeason && darkerColor
+    ? {
+        background: typeof darkerColor === 'string' && darkerColor.startsWith('#')
+          ? `linear-gradient(to right, ${darkerColor}, ${darkerColor})`
+          : darkerColor
+      }
+    : { background: 'linear-gradient(to right, #18181f, #111118)', borderBottom: '1px solid #2a2a38' };
 
   return (
-    <nav 
-      className="text-white shadow-lg"
-      style={navbarStyle}
-    >
+    <nav className="text-white shadow-lg" style={navbarStyle}>
       <div className="container mx-auto px-2 sm:px-4">
         <div className="flex items-center justify-between h-14 sm:h-16">
           <Link to="/" className="flex items-center gap-2 sm:gap-3 font-bold text-sm sm:text-xl min-w-0">
             {currentSeason?.logoUrl ? (
-              <img 
-                src={currentSeason.logoUrl} 
+              <img
+                src={currentSeason.logoUrl}
                 alt={currentSeason.title}
                 className="w-8 h-8 sm:w-10 sm:h-10 rounded-full object-cover flex-shrink-0"
               />
             ) : (
-              <Dumbbell className="w-6 h-6 sm:w-8 sm:h-8 flex-shrink-0" />
+              <Dumbbell className="w-6 h-6 sm:w-8 sm:h-8 flex-shrink-0 text-zinc-300" />
             )}
-            <span className="truncate max-w-[120px] sm:max-w-none">
+            <span className="truncate max-w-[120px] sm:max-w-none text-zinc-100">
               {currentSeason?.title || 'Daily Check Maromba'}
             </span>
           </Link>
@@ -72,29 +58,28 @@ export const Navbar = () => {
             {navItems.map((item) => {
               const Icon = item.icon;
               const isActive = location.pathname === item.path;
-
               return (
                 <Link
                   key={item.path}
                   to={item.path}
                   className={`flex items-center gap-1 sm:gap-2 px-2 sm:px-4 py-2 rounded-lg transition-all ${
                     isActive
-                      ? 'bg-white text-opacity-95 font-semibold'
-                      : 'hover:bg-white hover:bg-opacity-20'
+                      ? 'bg-white/15 font-semibold text-white'
+                      : 'text-white/70 hover:bg-white/10 hover:text-white'
                   }`}
-                  style={isActive && darkerColor ? { color: darkerColor } : {}}
+                  style={isActive && darkerColor ? { color: '#fff' } : {}}
                 >
                   <Icon className="w-4 h-4 sm:w-5 sm:h-5" />
                   <span className="hidden md:inline text-sm">{item.label}</span>
                 </Link>
               );
             })}
-            
+
             <div className="ml-auto">
               {isAdmin ? (
                 <button
                   onClick={handleLogout}
-                  className="flex items-center justify-center p-2 rounded-lg transition-all hover:bg-white hover:bg-opacity-20"
+                  className="flex items-center justify-center p-2 rounded-lg transition-all text-white/70 hover:bg-white/10 hover:text-white"
                   title="Sair"
                 >
                   <LogOut className="w-5 h-5" />
@@ -102,7 +87,7 @@ export const Navbar = () => {
               ) : (
                 <Link
                   to="/login"
-                  className="flex items-center justify-center p-2 rounded-lg transition-all hover:bg-white hover:bg-opacity-20"
+                  className="flex items-center justify-center p-2 rounded-lg transition-all text-white/70 hover:bg-white/10 hover:text-white"
                   title="Login Admin"
                 >
                   <LogIn className="w-5 h-5" />

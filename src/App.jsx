@@ -17,20 +17,13 @@ import './styles/global.css';
 
 function AppContent() {
   const { currentSeason, loading } = useSeason();
-  const { lighterColor } = useSeasonColors(currentSeason?.logoUrl);
-  
   // Atualiza apenas o favicon baseado na temporada
   const faviconUrl = !loading && currentSeason?.logoUrl ? currentSeason.logoUrl : null;
   
   usePageMetadata('Daily Check Maromba', faviconUrl);
 
-  const backgroundColor = currentSeason && lighterColor ? lighterColor : 'rgb(249, 250, 251)';
-
   return (
-    <div 
-      className="min-h-screen"
-      style={{ backgroundColor }}
-    >
+    <div className="min-h-screen bg-[#0c0c12]">
       <Navbar />
       <Routes>
         <Route path="/" element={<Dashboard />} />

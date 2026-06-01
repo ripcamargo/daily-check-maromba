@@ -30,24 +30,63 @@ export const createAthlete = async (athleteData) => {
   }
 };
 
+const MAX_PHOTO_PX = 400;
+const PHOTO_QUALITY = 0.82;
+const MAX_FULL_PHOTO_PX = 700;
+const FULL_PHOTO_QUALITY = 0.8;
+
 /**
- * Converte foto para Base64 (sem usar Firebase Storage)
+ * Converte foto para Base64 comprimida via Canvas (max 400px, JPEG 82%)
  */
-export const uploadAthletePhoto = async (file, athleteId) => {
-  try {
-    return new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        // Retorna a imagem em Base64
-        resolve(e.target.result);
+export const uploadAthletePhoto = async (file) => {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onerror = reject;
+    reader.onload = (e) => {
+      const img = new Image();
+      img.onerror = reject;
+      img.onload = () => {
+        const scale = Math.min(1, MAX_PHOTO_PX / Math.max(img.width, img.height));
+        const w = Math.round(img.width * scale);
+        const h = Math.round(img.height * scale);
+
+        const canvas = document.createElement('canvas');
+        canvas.width = w;
+        canvas.height = h;
+        canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+
+        resolve(canvas.toDataURL('image/jpeg', PHOTO_QUALITY));
       };
-      reader.onerror = (error) => reject(error);
-      reader.readAsDataURL(file);
-    });
-  } catch (error) {
-    console.error('Erro ao processar foto:', error);
-    throw error;
-  }
+      img.src = e.target.result;
+    };
+    reader.readAsDataURL(file);
+  });
+};
+
+/**
+ * Comprime foto de corpo completo para Base64 (max 700px, JPEG 80%)
+ */
+export const uploadFullPhoto = async (file) => {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onerror = reject;
+    reader.onload = (e) => {
+      const img = new Image();
+      img.onerror = reject;
+      img.onload = () => {
+        const scale = Math.min(1, MAX_FULL_PHOTO_PX / Math.max(img.width, img.height));
+        const w = Math.round(img.width * scale);
+        const h = Math.round(img.height * scale);
+        const canvas = document.createElement('canvas');
+        canvas.width = w;
+        canvas.height = h;
+        canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+        resolve(canvas.toDataURL('image/jpeg', FULL_PHOTO_QUALITY));
+      };
+      img.src = e.target.result;
+    };
+    reader.readAsDataURL(file);
+  });
 };
 
 /**

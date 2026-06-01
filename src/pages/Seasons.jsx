@@ -162,7 +162,7 @@ export default function Seasons() {
 
     try {
       setUploading(true);
-      
+
       // Buscar todos os check-ins da temporada
       const checkinsData = await getAllCheckins(season.id);
 
@@ -201,10 +201,10 @@ export default function Seasons() {
 
       // Atualizar temporada com os campeões
       await updateSeason(season.id, { champions });
-      
+
       setAlert({ type: 'success', message: 'Campeões recalculados com sucesso!' });
       await loadSeasons();
-      
+
       // Atualizar o viewingSeason com os novos dados
       const updatedSeasons = await getAllSeasons();
       const updatedSeason = updatedSeasons.find(s => s.id === season.id);
@@ -270,7 +270,7 @@ export default function Seasons() {
         const backgroundUrl = await uploadSeasonLogo(formData.backgroundFile, newSeason.id);
         updates.backgroundUrl = backgroundUrl;
       }
-      
+
       if (Object.keys(updates).length > 0) {
         await updateSeason(newSeason.id, updates);
       }
@@ -311,7 +311,7 @@ export default function Seasons() {
         const logoUrl = await uploadSeasonLogo(formData.logoFile, currentSeason.id);
         updates.logoUrl = logoUrl;
       }
-      
+
       if (formData.backgroundFile) {
         const backgroundUrl = await uploadSeasonLogo(formData.backgroundFile, currentSeason.id);
         updates.backgroundUrl = backgroundUrl;
@@ -448,10 +448,10 @@ export default function Seasons() {
 
       // Buscar todos os check-ins da temporada
       const allCheckins = await getAllCheckins(currentSeason.id);
-      
+
       // Ordenar por data para processar em ordem cronológica
       const sortedCheckins = allCheckins.sort((a, b) => a.date.localeCompare(b.date));
-      
+
       let processedCount = 0;
 
       // Garantir que a temporada tem todos os campos necessários
@@ -471,7 +471,7 @@ export default function Seasons() {
       // Reprocessar cada check-in
       for (const checkin of sortedCheckins) {
         console.log(`Processando ${checkin.date}...`);
-        
+
         // Preparar dados no formato que processCheckins espera
         const rawCheckins = {};
         for (const [athleteId, athleteData] of Object.entries(checkin.athletes || {})) {
@@ -482,21 +482,21 @@ export default function Seasons() {
 
         // Reprocessar com as regras atuais
         const processedCheckins = await processCheckins(seasonWithDefaults, checkin.date, rawCheckins);
-        
+
         // Salvar de volta (passando rawCheckins e season para que saveCheckins possa reprocessar)
         await saveCheckins(currentSeason.id, checkin.date, rawCheckins, seasonWithDefaults);
         processedCount++;
       }
 
-      setAlert({ 
-        type: 'success', 
-        message: `✅ Reprocessamento concluído! ${processedCount} check-ins atualizados.` 
+      setAlert({
+        type: 'success',
+        message: `✅ Reprocessamento concluído! ${processedCount} check-ins atualizados.`
       });
     } catch (error) {
       console.error('Erro ao reprocessar:', error);
-      setAlert({ 
-        type: 'error', 
-        message: `Erro ao reprocessar check-ins: ${error.message}` 
+      setAlert({
+        type: 'error',
+        message: `Erro ao reprocessar check-ins: ${error.message}`
       });
     } finally {
       setReprocessing(false);
@@ -523,8 +523,8 @@ export default function Seasons() {
       <div className="container mx-auto px-4 py-8">
       <div className="flex justify-between items-center mb-8">
         <div>
-          <h1 className="text-3xl font-bold text-gray-800">Temporadas</h1>
-          <p className="text-gray-600 mt-2">Gerencie as temporadas do projeto</p>
+          <h1 className="text-3xl font-bold text-zinc-100">Temporadas</h1>
+          <p className="text-zinc-400 mt-2">Gerencie as temporadas do projeto</p>
         </div>
         {isAdmin && (
           <Button onClick={handleOpenModal} className="flex items-center gap-2">
@@ -539,7 +539,7 @@ export default function Seasons() {
       <Card title="Todas as Temporadas">
         {seasons.length === 0 ? (
           <div className="text-center py-12">
-            <p className="text-gray-500 mb-4">Nenhuma temporada criada ainda.</p>
+            <p className="text-zinc-400 mb-4">Nenhuma temporada criada ainda.</p>
             <Button onClick={handleOpenModal}>Criar Primeira Temporada</Button>
           </div>
         ) : (
@@ -549,25 +549,25 @@ export default function Seasons() {
                 key={season.id}
                 className={`p-4 rounded-lg border-2 ${
                   season.active
-                    ? 'bg-green-50 border-green-300'
-                    : 'bg-gray-50 border-gray-200'
+                    ? 'bg-emerald-400/5 border-emerald-400/30'
+                    : 'bg-zinc-800/50 border-zinc-700'
                 }`}
               >
                 <div className="flex justify-between items-start">
                   <div className="flex-1">
                     <div className="flex items-center gap-2 mb-2">
-                      <h3 className="text-xl font-bold text-gray-800">
+                      <h3 className="text-xl font-bold text-zinc-100">
                         {season.title}
                       </h3>
                       {season.active && (
-                        <span className="px-2 py-1 bg-green-500 text-white text-xs font-bold rounded">
+                        <span className="px-2 py-1 bg-emerald-500 text-white text-xs font-bold rounded">
                           ATIVA
                         </span>
                       )}
                     </div>
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm text-zinc-400">
                       <div>
-                        <CalendarIcon className="w-4 h-4 inline mr-1 text-gray-500" />
+                        <CalendarIcon className="w-4 h-4 inline mr-1 text-zinc-500" />
                         {formatDate(season.startDate)} - {formatDate(season.endDate)}
                       </div>
                       <div>
@@ -628,7 +628,7 @@ export default function Seasons() {
       >
         <form onSubmit={handleSubmit}>
           <div className="mb-4">
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block text-sm font-medium text-zinc-300 mb-2">
               Importar Configurações de Temporada Anterior
             </label>
             <select
@@ -639,7 +639,7 @@ export default function Seasons() {
                   handleImportFromSeason(e.target.value);
                 }
               }}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:border-transparent"
+              className="w-full px-4 py-2 border border-zinc-700 rounded-lg bg-zinc-800 text-zinc-100 focus:border-transparent focus:outline-none"
               onFocus={(e) => {
                 e.target.style.outline = 'none';
                 e.target.style.boxShadow = `0 0 0 3px ${primary}40`;
@@ -655,7 +655,7 @@ export default function Seasons() {
                 </option>
               ))}
             </select>
-            <p className="text-sm text-gray-500 mt-1">
+            <p className="text-sm text-zinc-500 mt-1">
               Importa participantes e configurações (multa, folgas, XP, etc.) de uma temporada finalizada
             </p>
           </div>
@@ -704,13 +704,13 @@ export default function Seasons() {
           </div>
 
           <div className="mb-4">
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block text-sm font-medium text-zinc-300 mb-2">
               Dia de Início da Semana
             </label>
             <select
               value={formData.weekStartsOn}
               onChange={(e) => setFormData({ ...formData, weekStartsOn: e.target.value })}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg"
+              className="w-full px-4 py-2 border border-zinc-700 rounded-lg bg-zinc-800 text-zinc-100 focus:outline-none"
               required
             >
               <option value="0">Domingo</option>
@@ -721,11 +721,11 @@ export default function Seasons() {
               <option value="5">Sexta-feira</option>
               <option value="6">Sábado</option>
             </select>
-            <p className="text-sm text-gray-500 mt-1">Escolha o dia em que a semana útil começa para cálculo de faltas</p>
+            <p className="text-sm text-zinc-500 mt-1">Escolha o dia em que a semana útil começa para cálculo de faltas</p>
           </div>
 
-          <div className="mb-6 border border-gray-200 rounded-lg p-4 bg-gray-50">
-            <h4 className="text-sm font-semibold text-gray-800 mb-3">Configuração de XP da Temporada</h4>
+          <div className="mb-6 border border-zinc-700 rounded-lg p-4 bg-zinc-800/50">
+            <h4 className="text-sm font-semibold text-zinc-100 mb-3">Configuração de XP da Temporada</h4>
             <div className="grid grid-cols-2 gap-4">
               <Input
                 label="XP Presença"
@@ -787,38 +787,38 @@ export default function Seasons() {
           </div>
 
           <div className="mb-4">
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block text-sm font-medium text-zinc-300 mb-2">
               Logo da Temporada
             </label>
             <input
               type="file"
               accept="image/*"
               onChange={(e) => setFormData({ ...formData, logoFile: e.target.files[0] })}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg"
+              className="w-full px-4 py-2 border border-zinc-700 rounded-lg bg-zinc-800 text-zinc-100"
             />
-            <p className="text-sm text-gray-500 mt-1">Logo circular que aparece no rodapé da imagem semanal</p>
+            <p className="text-sm text-zinc-500 mt-1">Logo circular que aparece no rodapé da imagem semanal</p>
           </div>
 
           <div className="mb-4">
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block text-sm font-medium text-zinc-300 mb-2">
               Background para Imagem Semanal
             </label>
             <input
               type="file"
               accept="image/*"
               onChange={(e) => setFormData({ ...formData, backgroundFile: e.target.files[0] })}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg"
+              className="w-full px-4 py-2 border border-zinc-700 rounded-lg bg-zinc-800 text-zinc-100"
             />
-            <p className="text-sm text-gray-500 mt-1">Imagem de fundo para o status semanal (recomendado: 720x1280px)</p>
+            <p className="text-sm text-zinc-500 mt-1">Imagem de fundo para o status semanal (recomendado: 720x1280px)</p>
           </div>
 
           <div className="mb-4">
-            <label className="block text-sm font-medium text-gray-700 mb-3">
-              Participantes <span className="text-red-500">*</span>
+            <label className="block text-sm font-medium text-zinc-300 mb-3">
+              Participantes <span className="text-red-400">*</span>
             </label>
-            <div className="max-h-60 overflow-y-auto border rounded-lg p-4 space-y-2">
+            <div className="max-h-60 overflow-y-auto border border-zinc-700 rounded-lg p-4 space-y-2 bg-zinc-800/30">
               {athletes.map((athlete) => (
-                <label key={athlete.id} className="flex items-center gap-3 p-2 hover:bg-gray-50 rounded cursor-pointer">
+                <label key={athlete.id} className="flex items-center gap-3 p-2 hover:bg-zinc-800 rounded cursor-pointer">
                   <input
                     type="checkbox"
                     checked={formData.participants.includes(athlete.id)}
@@ -826,13 +826,13 @@ export default function Seasons() {
                     className="w-5 h-5"
                     style={{ accentColor: primary }}
                   />
-                  <span className="font-medium">{athlete.name}</span>
-                  <span className="text-sm text-gray-500">({athlete.experienceLevel})</span>
+                  <span className="font-medium text-zinc-100">{athlete.name}</span>
+                  <span className="text-sm text-zinc-500">({athlete.experienceLevel})</span>
                 </label>
               ))}
             </div>
             {formData.participants.length === 0 && (
-              <p className="text-red-500 text-sm mt-1">Selecione pelo menos um participante</p>
+              <p className="text-red-400 text-sm mt-1">Selecione pelo menos um participante</p>
             )}
           </div>
 
@@ -898,13 +898,13 @@ export default function Seasons() {
           </div>
 
           <div className="mb-4">
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block text-sm font-medium text-zinc-300 mb-2">
               Dia de Início da Semana
             </label>
             <select
               value={formData.weekStartsOn}
               onChange={(e) => setFormData({ ...formData, weekStartsOn: e.target.value })}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg"
+              className="w-full px-4 py-2 border border-zinc-700 rounded-lg bg-zinc-800 text-zinc-100 focus:outline-none"
               required
             >
               <option value="0">Domingo</option>
@@ -915,11 +915,11 @@ export default function Seasons() {
               <option value="5">Sexta-feira</option>
               <option value="6">Sábado</option>
             </select>
-            <p className="text-sm text-gray-500 mt-1">Escolha o dia em que a semana útil começa para cálculo de faltas</p>
+            <p className="text-sm text-zinc-500 mt-1">Escolha o dia em que a semana útil começa para cálculo de faltas</p>
           </div>
 
-          <div className="mb-6 border border-gray-200 rounded-lg p-4 bg-gray-50">
-            <h4 className="text-sm font-semibold text-gray-800 mb-3">Configuração de XP da Temporada</h4>
+          <div className="mb-6 border border-zinc-700 rounded-lg p-4 bg-zinc-800/50">
+            <h4 className="text-sm font-semibold text-zinc-100 mb-3">Configuração de XP da Temporada</h4>
             <div className="grid grid-cols-2 gap-4">
               <Input
                 label="XP Presença"
@@ -981,46 +981,46 @@ export default function Seasons() {
           </div>
 
           <div className="mb-4">
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block text-sm font-medium text-zinc-300 mb-2">
               Logo da Temporada
             </label>
             <input
               type="file"
               accept="image/*"
               onChange={(e) => setFormData({ ...formData, logoFile: e.target.files[0] })}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg"
+              className="w-full px-4 py-2 border border-zinc-700 rounded-lg bg-zinc-800 text-zinc-100"
             />
-            <p className="text-sm text-gray-500 mt-1">Logo circular que aparece no rodapé da imagem semanal</p>
+            <p className="text-sm text-zinc-500 mt-1">Logo circular que aparece no rodapé da imagem semanal</p>
           </div>
 
           <div className="mb-4">
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block text-sm font-medium text-zinc-300 mb-2">
               Background para Imagem Semanal
             </label>
             <input
               type="file"
               accept="image/*"
               onChange={(e) => setFormData({ ...formData, backgroundFile: e.target.files[0] })}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg"
+              className="w-full px-4 py-2 border border-zinc-700 rounded-lg bg-zinc-800 text-zinc-100"
             />
-            <p className="text-sm text-gray-500 mt-1">Imagem de fundo para o status semanal (recomendado: 720x1280px)</p>
+            <p className="text-sm text-zinc-500 mt-1">Imagem de fundo para o status semanal (recomendado: 720x1280px)</p>
             {currentSeason?.backgroundUrl && !formData.backgroundFile && (
-              <p className="text-sm text-green-600 mt-1">✓ Background atual configurado</p>
+              <p className="text-sm text-emerald-400 mt-1">✓ Background atual configurado</p>
             )}
           </div>
 
           <div className="mb-4">
-            <label className="block text-sm font-medium text-gray-700 mb-3">
+            <label className="block text-sm font-medium text-zinc-300 mb-3">
               Participantes
             </label>
-            <div className="max-h-72 overflow-y-auto border rounded-lg p-4 space-y-2">
+            <div className="max-h-72 overflow-y-auto border border-zinc-700 rounded-lg p-4 space-y-2 bg-zinc-800/30">
               {athletes.map((athlete) => {
                 const withdrawal = currentSeason?.withdrawals?.[athlete.id];
                 const isParticipant = formData.participants.includes(athlete.id);
                 return (
                   <div
                     key={athlete.id}
-                    className={`flex items-center gap-3 p-2 rounded ${withdrawal ? 'bg-red-50' : 'hover:bg-gray-50'}`}
+                    className={`flex items-center gap-3 p-2 rounded ${withdrawal ? 'bg-red-400/10' : 'hover:bg-zinc-800'}`}
                   >
                     <label className="flex items-center gap-3 flex-1 cursor-pointer">
                       <input
@@ -1030,11 +1030,11 @@ export default function Seasons() {
                         className="w-5 h-5"
                         style={{ accentColor: primary }}
                       />
-                      <span className={`font-medium ${withdrawal ? 'text-gray-400 line-through' : ''}`}>
+                      <span className={`font-medium ${withdrawal ? 'text-zinc-500 line-through' : 'text-zinc-100'}`}>
                         {athlete.name}
                       </span>
                       {withdrawal && (
-                        <span className="text-xs text-red-500 font-semibold ml-1">
+                        <span className="text-xs text-red-400 font-semibold ml-1">
                           Desistiu em {withdrawal.date.split('-').reverse().join('/')}
                         </span>
                       )}
@@ -1045,7 +1045,7 @@ export default function Seasons() {
                           type="button"
                           onClick={() => handleUndoWithdrawal(athlete.id, athlete.name)}
                           title="Desfazer desistência"
-                          className="p-1.5 rounded-lg text-gray-500 hover:text-green-600 hover:bg-green-50 transition-colors"
+                          className="p-1.5 rounded-lg text-zinc-500 hover:text-emerald-400 hover:bg-emerald-400/10 transition-colors"
                         >
                           <RotateCcw className="w-4 h-4" />
                         </button>
@@ -1054,7 +1054,7 @@ export default function Seasons() {
                           type="button"
                           onClick={() => handleOpenWithdrawalModal(athlete.id, athlete.name)}
                           title="Registrar desistência"
-                          className="p-1.5 rounded-lg text-gray-500 hover:text-red-600 hover:bg-red-50 transition-colors"
+                          className="p-1.5 rounded-lg text-zinc-500 hover:text-red-400 hover:bg-red-400/10 transition-colors"
                         >
                           <UserX className="w-4 h-4" />
                         </button>
@@ -1067,7 +1067,7 @@ export default function Seasons() {
           </div>
 
           <div className="mb-4">
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block text-sm font-medium text-zinc-300 mb-2">
               Datas Bônus ⭐ (Presenças nestes dias ganham Extra automaticamente)
             </label>
             <div className="space-y-2">
@@ -1081,7 +1081,7 @@ export default function Seasons() {
                       newDates[index] = e.target.value;
                       setFormData({ ...formData, bonusDates: newDates });
                     }}
-                    className="flex-1 px-4 py-2 border border-gray-300 rounded-lg"
+                    className="flex-1 px-4 py-2 border border-zinc-700 rounded-lg bg-zinc-800 text-zinc-100"
                   />
                   <button
                     type="button"
@@ -1098,15 +1098,15 @@ export default function Seasons() {
               <button
                 type="button"
                 onClick={() => setFormData({ ...formData, bonusDates: [...formData.bonusDates, ''] })}
-                className="w-full px-4 py-2 border-2 border-dashed border-gray-300 rounded-lg text-gray-600 transition-colors"
+                className="w-full px-4 py-2 border-2 border-dashed border-zinc-600 rounded-lg text-zinc-400 transition-colors"
                 style={{ cursor: 'pointer' }}
                 onMouseEnter={(e) => {
                   e.currentTarget.style.borderColor = primary;
                   e.currentTarget.style.color = primary;
                 }}
                 onMouseLeave={(e) => {
-                  e.currentTarget.style.borderColor = '#d1d5db';
-                  e.currentTarget.style.color = '#4b5563';
+                  e.currentTarget.style.borderColor = '#52525b';
+                  e.currentTarget.style.color = '#a1a1aa';
                 }}
               >
                 + Adicionar Data Bônus
@@ -1115,13 +1115,13 @@ export default function Seasons() {
           </div>
 
           <div className="mb-4">
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block text-sm font-medium text-zinc-300 mb-2">
               Benefício da Data Extra ⭐
             </label>
             <select
               value={formData.bonusBenefit}
               onChange={(e) => setFormData({ ...formData, bonusBenefit: e.target.value })}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:border-transparent"
+              className="w-full px-4 py-2 border border-zinc-700 rounded-lg bg-zinc-800 text-zinc-100 focus:border-transparent focus:outline-none"
               onFocus={(e) => {
                 e.target.style.outline = 'none';
                 e.target.style.boxShadow = `0 0 0 3px ${primary}40`;
@@ -1135,21 +1135,21 @@ export default function Seasons() {
             </select>
             {formData.bonusBenefit === 'vale-folga' && (
               <p className="text-sm mt-2 p-3 rounded-lg" style={{ color: primary, backgroundColor: `${primary}15`, borderWidth: '1px', borderColor: primary }}>
-                ℹ️ <strong>Vale-folga:</strong> Cada estrela (⭐) conquistada permite que o atleta tenha uma falta anulada, 
+                ℹ️ <strong>Vale-folga:</strong> Cada estrela (⭐) conquistada permite que o atleta tenha uma falta anulada,
                 transformando-a em uma folga simples (🔷). As estrelas são utilizadas automaticamente para compensar faltas.
               </p>
             )}
           </div>
 
-          <div className="border-t pt-6 mt-6">
-            <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-4">
-              <h4 className="font-semibold text-yellow-800 mb-2 flex items-center gap-2">
+          <div className="border-t border-zinc-700 pt-6 mt-6">
+            <div className="bg-amber-400/5 border border-amber-400/20 rounded-lg p-4 mb-4">
+              <h4 className="font-semibold text-amber-400 mb-2 flex items-center gap-2">
                 <RefreshCw className="w-5 h-5" />
                 Reprocessar Check-ins
               </h4>
-              <p className="text-sm text-yellow-700 mb-3">
-                Use esta função para recalcular todos os status de presença (folgas/faltas) 
-                baseado nas regras atuais da temporada. Útil quando você altera o limite de 
+              <p className="text-sm text-amber-400/70 mb-3">
+                Use esta função para recalcular todos os status de presença (folgas/faltas)
+                baseado nas regras atuais da temporada. Útil quando você altera o limite de
                 folgas ou o dia de início da semana.
               </p>
               <Button
@@ -1184,29 +1184,29 @@ export default function Seasons() {
       >
         {viewingSeason && (
           <div className="space-y-6">
-            <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
-              <p className="text-sm text-gray-600 mb-2">
+            <div className="bg-blue-400/10 p-4 rounded-lg border border-blue-400/20">
+              <p className="text-sm text-blue-400">
                 ⚠️ Esta é uma temporada finalizada. Não é possível editar as configurações, apenas visualizar ou excluir.
               </p>
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Título da Temporada</label>
-              <div className="px-4 py-2 bg-gray-100 border border-gray-300 rounded-lg text-gray-700">
+              <label className="block text-sm font-medium text-zinc-300 mb-1">Título da Temporada</label>
+              <div className="px-4 py-2 bg-zinc-800 border border-zinc-700 rounded-lg text-zinc-100">
                 {viewingSeason.title}
               </div>
             </div>
 
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Data de Início</label>
-                <div className="px-4 py-2 bg-gray-100 border border-gray-300 rounded-lg text-gray-700">
+                <label className="block text-sm font-medium text-zinc-300 mb-1">Data de Início</label>
+                <div className="px-4 py-2 bg-zinc-800 border border-zinc-700 rounded-lg text-zinc-100">
                   {formatDate(viewingSeason.startDate)}
                 </div>
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Data de Término</label>
-                <div className="px-4 py-2 bg-gray-100 border border-gray-300 rounded-lg text-gray-700">
+                <label className="block text-sm font-medium text-zinc-300 mb-1">Data de Término</label>
+                <div className="px-4 py-2 bg-zinc-800 border border-zinc-700 rounded-lg text-zinc-100">
                   {formatDate(viewingSeason.endDate)}
                 </div>
               </div>
@@ -1214,68 +1214,68 @@ export default function Seasons() {
 
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Multa por Falta</label>
-                <div className="px-4 py-2 bg-gray-100 border border-gray-300 rounded-lg text-gray-700">
+                <label className="block text-sm font-medium text-zinc-300 mb-1">Multa por Falta</label>
+                <div className="px-4 py-2 bg-zinc-800 border border-zinc-700 rounded-lg text-zinc-100">
                   {formatCurrency(viewingSeason.finePerAbsence)}
                 </div>
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Folgas Semanais Permitidas</label>
-                <div className="px-4 py-2 bg-gray-100 border border-gray-300 rounded-lg text-gray-700">
+                <label className="block text-sm font-medium text-zinc-300 mb-1">Folgas Semanais Permitidas</label>
+                <div className="px-4 py-2 bg-zinc-800 border border-zinc-700 rounded-lg text-zinc-100">
                   {viewingSeason.weeklyRestLimit}
                 </div>
               </div>
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Dia de Início da Semana</label>
-              <div className="px-4 py-2 bg-gray-100 border border-gray-300 rounded-lg text-gray-700">
+              <label className="block text-sm font-medium text-zinc-300 mb-1">Dia de Início da Semana</label>
+              <div className="px-4 py-2 bg-zinc-800 border border-zinc-700 rounded-lg text-zinc-100">
                 {['Domingo', 'Segunda-feira', 'Terça-feira', 'Quarta-feira', 'Quinta-feira', 'Sexta-feira', 'Sábado'][viewingSeason.weekStartsOn || 1]}
               </div>
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Configuração de XP</label>
+              <label className="block text-sm font-medium text-zinc-300 mb-2">Configuração de XP</label>
               <div className="grid grid-cols-2 gap-3">
-                <div className="px-4 py-2 bg-gray-100 border border-gray-300 rounded-lg text-gray-700">Presença: {viewingSeason.xpConfig?.present}</div>
-                <div className="px-4 py-2 bg-gray-100 border border-gray-300 rounded-lg text-gray-700">Falta: {viewingSeason.xpConfig?.absence}</div>
-                <div className="px-4 py-2 bg-gray-100 border border-gray-300 rounded-lg text-gray-700">Folga: {viewingSeason.xpConfig?.rest}</div>
-                <div className="px-4 py-2 bg-gray-100 border border-gray-300 rounded-lg text-gray-700">Justificado: {viewingSeason.xpConfig?.justified}</div>
-                <div className="px-4 py-2 bg-gray-100 border border-gray-300 rounded-lg text-gray-700">Hospital: {viewingSeason.xpConfig?.hospital}</div>
-                <div className="px-4 py-2 bg-gray-100 border border-gray-300 rounded-lg text-gray-700">Extra: {viewingSeason.xpConfig?.extra}</div>
-                <div className="px-4 py-2 bg-gray-100 border border-gray-300 rounded-lg text-gray-700">Bônus campeão: {viewingSeason.xpConfig?.championBonus}</div>
-                <div className="px-4 py-2 bg-gray-100 border border-gray-300 rounded-lg text-gray-700">Bônus vice: {viewingSeason.xpConfig?.runnerUpBonus}</div>
+                <div className="px-4 py-2 bg-zinc-800 border border-zinc-700 rounded-lg text-zinc-300">Presença: {viewingSeason.xpConfig?.present}</div>
+                <div className="px-4 py-2 bg-zinc-800 border border-zinc-700 rounded-lg text-zinc-300">Falta: {viewingSeason.xpConfig?.absence}</div>
+                <div className="px-4 py-2 bg-zinc-800 border border-zinc-700 rounded-lg text-zinc-300">Folga: {viewingSeason.xpConfig?.rest}</div>
+                <div className="px-4 py-2 bg-zinc-800 border border-zinc-700 rounded-lg text-zinc-300">Justificado: {viewingSeason.xpConfig?.justified}</div>
+                <div className="px-4 py-2 bg-zinc-800 border border-zinc-700 rounded-lg text-zinc-300">Hospital: {viewingSeason.xpConfig?.hospital}</div>
+                <div className="px-4 py-2 bg-zinc-800 border border-zinc-700 rounded-lg text-zinc-300">Extra: {viewingSeason.xpConfig?.extra}</div>
+                <div className="px-4 py-2 bg-zinc-800 border border-zinc-700 rounded-lg text-zinc-300">Bônus campeão: {viewingSeason.xpConfig?.championBonus}</div>
+                <div className="px-4 py-2 bg-zinc-800 border border-zinc-700 rounded-lg text-zinc-300">Bônus vice: {viewingSeason.xpConfig?.runnerUpBonus}</div>
               </div>
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Participantes</label>
-              <div className="max-h-60 overflow-y-auto border rounded-lg p-4 bg-gray-50">
+              <label className="block text-sm font-medium text-zinc-300 mb-2">Participantes</label>
+              <div className="max-h-60 overflow-y-auto border border-zinc-700 rounded-lg p-4 bg-zinc-800/30">
                 {viewingSeason.participants?.length > 0 ? (
                   <div className="space-y-2">
                     {viewingSeason.participants.map((participantId) => {
                       const athlete = athletes.find(a => a.id === participantId);
                       return athlete ? (
-                        <div key={participantId} className="flex items-center gap-2 p-2 bg-white rounded border">
-                          <CheckCircle className="w-4 h-4 text-green-500" />
-                          <span className="font-medium">{athlete.name}</span>
-                          <span className="text-sm text-gray-500">({athlete.experienceLevel})</span>
+                        <div key={participantId} className="flex items-center gap-2 p-2 bg-zinc-800 rounded border border-zinc-700">
+                          <CheckCircle className="w-4 h-4 text-emerald-400" />
+                          <span className="font-medium text-zinc-100">{athlete.name}</span>
+                          <span className="text-sm text-zinc-500">({athlete.experienceLevel})</span>
                         </div>
                       ) : null;
                     })}
                   </div>
                 ) : (
-                  <p className="text-gray-500">Nenhum participante cadastrado</p>
+                  <p className="text-zinc-500">Nenhum participante cadastrado</p>
                 )}
               </div>
             </div>
 
             {viewingSeason.bonusDates && viewingSeason.bonusDates.length > 0 && (
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Datas Bônus ⭐</label>
+                <label className="block text-sm font-medium text-zinc-300 mb-2">Datas Bônus ⭐</label>
                 <div className="space-y-2">
                   {viewingSeason.bonusDates.map((date, index) => (
-                    <div key={index} className="px-4 py-2 bg-yellow-50 border border-yellow-300 rounded-lg text-gray-700">
+                    <div key={index} className="px-4 py-2 bg-amber-400/10 border border-amber-400/20 rounded-lg text-zinc-300">
                       {formatDate(new Date(date))}
                     </div>
                   ))}
@@ -1285,43 +1285,43 @@ export default function Seasons() {
 
             {viewingSeason.bonusBenefit && viewingSeason.bonusBenefit !== '-' && (
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Benefício da Data Extra</label>
-                <div className="px-4 py-2 bg-gray-100 border border-gray-300 rounded-lg text-gray-700">
+                <label className="block text-sm font-medium text-zinc-300 mb-1">Benefício da Data Extra</label>
+                <div className="px-4 py-2 bg-zinc-800 border border-zinc-700 rounded-lg text-zinc-100">
                   {viewingSeason.bonusBenefit === 'vale-folga' ? 'Vale-folga' : viewingSeason.bonusBenefit}
                 </div>
               </div>
             )}
 
             {/* Seção de Campeões */}
-            <div className="border-t pt-6 mt-6">
-              <label className="block text-sm font-medium text-gray-700 mb-3">🏆 Campeões da Temporada</label>
-              
+            <div className="border-t border-zinc-700 pt-6 mt-6">
+              <label className="block text-sm font-medium text-zinc-300 mb-3">🏆 Campeões da Temporada</label>
+
               {viewingSeason.champions ? (
                 <div className="space-y-3">
                   {viewingSeason.champions.first && (
-                    <div className="flex items-center gap-3 p-4 bg-gradient-to-r from-yellow-400 to-yellow-500 text-yellow-900 rounded-lg shadow-md">
-                      <Trophy className="w-6 h-6" />
+                    <div className="flex items-center gap-3 p-4 bg-gradient-to-r from-amber-400/20 to-amber-400/10 border border-amber-400/30 rounded-lg">
+                      <Trophy className="w-6 h-6 text-amber-400" />
                       <div>
-                        <div className="font-bold text-sm">1º Lugar - Campeão</div>
-                        <div className="text-lg font-bold">{viewingSeason.champions.first.athleteName}</div>
+                        <div className="font-bold text-sm text-amber-400">1º Lugar - Campeão</div>
+                        <div className="text-lg font-bold text-zinc-100">{viewingSeason.champions.first.athleteName}</div>
                       </div>
                     </div>
                   )}
-                  
+
                   {viewingSeason.champions.second && (
-                    <div className="flex items-center gap-3 p-4 bg-gradient-to-r from-gray-300 to-gray-400 text-gray-800 rounded-lg shadow-md">
-                      <Award className="w-6 h-6" />
+                    <div className="flex items-center gap-3 p-4 bg-zinc-700/50 border border-zinc-600 rounded-lg">
+                      <Award className="w-6 h-6 text-zinc-300" />
                       <div>
-                        <div className="font-bold text-sm">2º Lugar - Vice-campeão</div>
-                        <div className="text-lg font-bold">{viewingSeason.champions.second.athleteName}</div>
+                        <div className="font-bold text-sm text-zinc-400">2º Lugar - Vice-campeão</div>
+                        <div className="text-lg font-bold text-zinc-100">{viewingSeason.champions.second.athleteName}</div>
                       </div>
                     </div>
                   )}
                 </div>
               ) : (
-                <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                  <p className="text-sm text-blue-700 mb-3">
-                    Esta temporada não tem campeões registrados. Clique no botão abaixo para calcular automaticamente 
+                <div className="bg-blue-400/10 border border-blue-400/20 rounded-lg p-4">
+                  <p className="text-sm text-blue-400 mb-3">
+                    Esta temporada não tem campeões registrados. Clique no botão abaixo para calcular automaticamente
                     baseado nos check-ins registrados.
                   </p>
                   <Button
@@ -1337,13 +1337,13 @@ export default function Seasons() {
               )}
             </div>
 
-            <div className="border-t pt-6 mt-6">
-              <div className="bg-red-50 border border-red-200 rounded-lg p-4">
-                <h4 className="font-semibold text-red-800 mb-2 flex items-center gap-2">
+            <div className="border-t border-zinc-700 pt-6 mt-6">
+              <div className="bg-red-400/10 border border-red-400/30 rounded-lg p-4">
+                <h4 className="font-semibold text-red-400 mb-2 flex items-center gap-2">
                   <Trash2 className="w-5 h-5" />
                   Zona de Perigo
                 </h4>
-                <p className="text-sm text-red-700 mb-3">
+                <p className="text-sm text-red-400/80 mb-3">
                   Excluir esta temporada removerá permanentemente todos os dados associados a ela. Esta ação não pode ser desfeita.
                 </p>
                 <Button
@@ -1370,22 +1370,22 @@ export default function Seasons() {
 
       {/* Modal Desistência */}
       {withdrawalModal.open && (
-        <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/50 px-4">
-          <div className="bg-white rounded-xl shadow-2xl p-6 w-full max-w-sm">
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/60 px-4">
+          <div className="bg-zinc-900 border border-zinc-700 rounded-xl shadow-2xl p-6 w-full max-w-sm">
             <div className="flex items-center gap-3 mb-4">
-              <div className="p-2 bg-red-100 rounded-lg">
-                <UserX className="w-5 h-5 text-red-600" />
+              <div className="p-2 bg-red-400/10 rounded-lg">
+                <UserX className="w-5 h-5 text-red-400" />
               </div>
               <div>
-                <h3 className="font-bold text-gray-800">Registrar Desistência</h3>
-                <p className="text-sm text-gray-500">{withdrawalModal.athleteName}</p>
+                <h3 className="font-bold text-zinc-100">Registrar Desistência</h3>
+                <p className="text-sm text-zinc-500">{withdrawalModal.athleteName}</p>
               </div>
             </div>
-            <p className="text-sm text-gray-600 mb-4">
+            <p className="text-sm text-zinc-400 mb-4">
               A partir desta data, o atleta não aparecerá mais no check-in. Os dados anteriores serão mantidos e o nome ficará destacado nas últimas posições do ranking.
             </p>
             <div className="mb-5">
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium text-zinc-300 mb-1">
                 Data da Desistência
               </label>
               <input
@@ -1394,7 +1394,7 @@ export default function Seasons() {
                 onChange={(e) => setWithdrawalDate(e.target.value)}
                 min={currentSeason ? formatDate(currentSeason.startDate, 'yyyy-MM-dd') : ''}
                 max={currentSeason ? formatDate(currentSeason.endDate, 'yyyy-MM-dd') : ''}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-400"
+                className="w-full px-4 py-2 border border-zinc-700 rounded-lg bg-zinc-800 text-zinc-100 focus:outline-none focus:ring-2 focus:ring-red-400"
               />
             </div>
             <div className="flex gap-3 justify-end">

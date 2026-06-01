@@ -80,23 +80,30 @@ export const createSeason = async (seasonData) => {
 };
 
 /**
- * Converte logo para Base64 (sem usar Firebase Storage)
+ * Comprime logo para Base64 via Canvas (max 200px, JPEG 85%)
  */
-export const uploadSeasonLogo = async (file, seasonId) => {
-  try {
-    return new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        // Retorna a imagem em Base64
-        resolve(e.target.result);
+export const uploadSeasonLogo = async (file) => {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onerror = reject;
+    reader.onload = (e) => {
+      const img = new Image();
+      img.onerror = reject;
+      img.onload = () => {
+        const MAX = 200;
+        const scale = Math.min(1, MAX / Math.max(img.width, img.height));
+        const w = Math.round(img.width * scale);
+        const h = Math.round(img.height * scale);
+        const canvas = document.createElement('canvas');
+        canvas.width = w;
+        canvas.height = h;
+        canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+        resolve(canvas.toDataURL('image/jpeg', 0.85));
       };
-      reader.onerror = (error) => reject(error);
-      reader.readAsDataURL(file);
-    });
-  } catch (error) {
-    console.error('Erro ao processar logo:', error);
-    throw error;
-  }
+      img.src = e.target.result;
+    };
+    reader.readAsDataURL(file);
+  });
 };
 
 /**
